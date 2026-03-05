@@ -1,0 +1,27 @@
+{
+  "name": "임장메이트 PRO",
+  "short_name": "임장메이트",
+  "description": "공인중개사 전용 매물 방문 관리 시스템",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait-primary",
+  "lang": "ko",
+  "categories": ["productivity", "business"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

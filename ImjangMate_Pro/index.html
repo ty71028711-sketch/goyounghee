@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>임장메이트 PRO</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#f59e0b" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="임장PRO" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    @media (min-width: 640px) {
+      body { background: #dde3ec; }
+      .app-root { box-shadow: 0 0 60px rgba(0,0,0,0.18) !important; }
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    input, select, textarea, button, a { font-family: 'Noto Sans KR', -apple-system, sans-serif; }
+    button { -webkit-tap-highlight-color: transparent; }
+    @keyframes fadeIn    { from { opacity:0 } to { opacity:1 } }
+    @keyframes slideUp   { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:translateY(0) } }
+    @keyframes modalUp   { from { transform:translateY(100%) } to { transform:translateY(0) } }
+    @keyframes pulseDot  { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
+    @keyframes shake     { 0%,100% { transform:translateX(0) } 15%,55% { transform:translateX(-7px) } 35%,75% { transform:translateX(7px) } }
+    .fade-in     { animation: fadeIn  0.2s ease both }
+    .slide-up    { animation: slideUp 0.22s ease both }
+    .modal-bg    { animation: fadeIn  0.2s ease both }
+    .modal-sheet { animation: modalUp 0.32s cubic-bezier(0.32,0.72,0,1) both }
+    .pulse-dot   { animation: pulseDot 2s ease-in-out infinite }
+    .shake       { animation: shake 0.45s ease }
+    .lock-bg {
+      background: #f1f5f9;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(245,158,11,0.07) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(59,130,246,0.06) 0%, transparent 50%);
+    }
+    @media print { body { background:#fff; color:#000; } .no-print { display:none !important; } }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo, memo } = React;
+
+/* ══════════════════════════════════════════════════
+   ★ 관리자 설정
+══════════════════════════════════════════════════ */
+const CONTACT_PHONE = "010-0000-0000";
+const MANAGER_NAME  = "소장님";
+const TERMS_URL     = "https://sojangnote.com/terms";
+
+const VALID_SERIALS = {
+  "1234":                  "2099-12-31",
+  "IMJP-2026-K9X2-PRO1":  "2027-02-25",
+  "IMJP-2026-M7Q4-PRO2":  "2027-02-25",
+  "IMJP-2026-N5R8-PRO3":  "2027-02-25",
+  "IMJP-2026-O3S6-PRO4":  "2027-03-31",
+  "IMJP-2026-P1T4-PRO5":  "2027-06-30",
+  "IMJP-2026-Q9U2-PRO6":  "2027-02-25",
+  "IMJP-2026-R7V0-PRO7":  "2027-02-25",
+  "IMJP-2026-S5W8-PRO8":  "2027-02-25",
+  "IMJP-2026-T3X6-PRO9":  "2027-08-31",
+  "IMJP-2026-U1Y4-PR10":  "2027-12-31",
+  "IMJP-TEST-SOON-0001":  "2026-03-10",
+  "IMJP-TEST-EXPR-0001":  "2025-12-31",
+};
+
+/* ══════════════════════════════════════════════════
+   ICONS
+══════════════════════════════════════════════════ */
+const Ic = (path, vb="0 0 24 24", extra={}) => ({ size=18, color="currentColor" }) => (
+  <svg width={size} height={size} viewBox={vb} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...extra}>{path}</svg>
+);
+const IconBuilding    = Ic(<><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/></>);
+const IconCalendar    = Ic(<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>);
+const IconPhone       = Ic(<><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.18 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.91 6.91l.83-.83a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></>);
+const IconClock       = Ic(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>);
+const IconTrash       = Ic(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></>);
+const IconPlus        = Ic(<><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>, "0 0 24 24", { strokeWidth:"2.5" });
+const IconUsers       = Ic(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>);
+const IconCheck       = Ic(<><polyline points="20 6 9 17 4 12"/></>, "0 0 24 24", { strokeWidth:"2.5" });
+const IconX           = Ic(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>, "0 0 24 24", { strokeWidth:"2.5" });
+const IconShield      = Ic(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>);
+const IconAlertCircle = Ic(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>);
+const IconKey         = Ic(<><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></>);
+const IconMessage     = Ic(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>);
+const IconHome        = Ic(<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>);
+const IconSettings    = Ic(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>);
+const IconPrinter     = Ic(<><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>);
+const IconArrowUpDown = Ic(<><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></>);
+const IconEdit        = Ic(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>);
+
+/* ══════════════════════════════════════════════════
+   카테고리 · 거래 유형
+══════════════════════════════════════════════════ */
+const CAT_LABELS  = { apt:"아파트/오피스텔", sale:"분양권", house:"주택" };
+const DEAL_LABELS = { sale:"매매", rental:"전월세", saleRight:"매매", saleRightRental:"전월세" };
+const VALID_DEALS = { apt:["sale","rental"], sale:["saleRight","saleRightRental"], house:["sale","rental"] };
+const DEFAULT_DEAL = { apt:"rental", sale:"saleRight", house:"rental" };
+
+/* ══════════════════════════════════════════════════
+   INITIAL DATA
+══════════════════════════════════════════════════ */
+let nextId = 5;
+const INITIAL_VISITS = [
+  { id:1, category:"apt", dealType:"rental", rentalType:"jeonse",
+    apartmentName:"래미안 퍼스티지", dong:"102동", ho:"1503호", area:"34평", type:"84A",
+    address:"", rooms:"", bathrooms:"", parking:"가능",
+    salePrice:"", jeonsePrice:"85000", deposit:"", monthlyRent:"",
+    basePrice:"", optionPrice:"", premium:"",
+    officetelResidential:false, officetelBusiness:false,
+    moveInDate:"2026-04-15", immediateMove:false, negotiateMove:false,
+    coBrokerAgency:"강남 센트럴부동산", coBrokerPhone:"02-555-1234",
+    hasPet:"가능", visitPhone:"010-1234-5678", visitTime:"09:30",
+    isVacant:false, appointmentStatus:"가능", memo:"집주인 직접 안내 예정. 주차 가능 확인 완료." },
+  { id:2, category:"apt", dealType:"rental", rentalType:"monthly",
+    apartmentName:"헬리오시티", dong:"84동", ho:"2201호", area:"59평", type:"120B",
+    address:"", rooms:"", bathrooms:"", parking:"가능",
+    salePrice:"", jeonsePrice:"", deposit:"30000", monthlyRent:"280",
+    basePrice:"", optionPrice:"", premium:"",
+    officetelResidential:false, officetelBusiness:false,
+    moveInDate:"2026-05-01", immediateMove:false, negotiateMove:false,
+    coBrokerAgency:"송파 탑공인중개사", coBrokerPhone:"02-413-9876",
+    hasPet:"불가능", visitPhone:"010-9876-5432", visitTime:"11:00",
+    isVacant:false, appointmentStatus:"확인중", memo:"세입자 일정 확인 중. 오후 재연락 필요." },
+  { id:3, category:"apt", dealType:"rental", rentalType:"jeonse",
+    apartmentName:"아크로리버파크", dong:"201동", ho:"3402호", area:"49평", type:"105C",
+    address:"", rooms:"", bathrooms:"", parking:"가능",
+    salePrice:"", jeonsePrice:"120000", deposit:"", monthlyRent:"",
+    basePrice:"", optionPrice:"", premium:"",
+    officetelResidential:false, officetelBusiness:false,
+    moveInDate:"", immediateMove:true, negotiateMove:false,
+    coBrokerAgency:"반포 우성공인중개사", coBrokerPhone:"02-534-5555",
+    hasPet:"가능", visitPhone:"010-5555-1234", visitTime:"14:00",
+    isVacant:false, appointmentStatus:"가능", memo:"" },
+  { id:4, category:"sale", dealType:"saleRight",
+    apartmentName:"잠실 래미안 아이파크", dong:"A동", ho:"1102호", area:"34평", type:"84A",
+    address:"", rooms:"", bathrooms:"", parking:"가능",
+    salePrice:"", jeonsePrice:"", deposit:"", monthlyRent:"",
+    basePrice:"60000", optionPrice:"3000", premium:"8000",
+    officetelResidential:false, officetelBusiness:false,
+    moveInDate:"2026-06-01", immediateMove:false, negotiateMove:false,
+    coBrokerAgency:"잠실 나루공인중개사", coBrokerPhone:"02-421-3333",
+    hasPet:"가능", visitPhone:"010-3333-4444", visitTime:"15:30",
+    isVacant:false, appointmentStatus:"방문완료", memo:"" },
+];
+
+/* ══════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════ */
+function formatMan(n) {
+  if (!n && n !== 0) return "";
+  const num = Number(String(n).replace(/[^0-9]/g, ""));
+  if (isNaN(num) || num === 0) return "";
+  return num.toLocaleString("ko-KR");
+}
+function getFormattedDate() {
+  const d = new Date(), days=["일","월","화","수","목","금","토"];
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+}
+function getStatusStyle(status) {
+  const m = {
+    "가능":    { bg:"rgba(16,185,129,.10)",  color:"#059669", border:"rgba(16,185,129,.3)"  },
+    "확인중":  { bg:"rgba(245,158,11,.10)",  color:"#d97706", border:"rgba(245,158,11,.3)"  },
+    "방문완료":{ bg:"rgba(59,130,246,.10)",  color:"#2563eb", border:"rgba(59,130,246,.3)"  },
+    "불가":    { bg:"rgba(239,68,68,.10)",   color:"#dc2626", border:"rgba(239,68,68,.3)"   },
+  };
+  return m[status] || { bg:"rgba(148,163,184,.1)", color:"#64748b", border:"rgba(148,163,184,.3)" };
+}
+function StatusIcon({ status }) {
+  if (status==="가능"||status==="방문완료") return <IconCheck size={10}/>;
+  if (status==="불가") return <IconX size={10}/>;
+  if (status==="확인중") return <span style={{fontSize:9,fontWeight:800,lineHeight:1}}>?</span>;
+  return null;
+}
+function formatSerial(raw) {
+  const c = raw.replace(/[^A-Z0-9]/gi,"").toUpperCase().slice(0,16);
+  const p=[]; for (let i=0;i<c.length;i+=4) p.push(c.slice(i,i+4));
+  return p.join("-");
+}
+function validateSerial(serial) {
+  const key = serial.trim().toUpperCase();
+  const expiryStr = VALID_SERIALS[key];
+  if (!expiryStr) return { valid:false };
+  const today = new Date(); today.setHours(0,0,0,0);
+  const expiry = new Date(expiryStr+"T23:59:59");
+  const expired = today > expiry;
+  return { valid:true, expired, expiryDate:expiryStr, daysLeft:Math.max(0, Math.ceil((expiry-today)/86400000)) };
+}
+function loadBusinessCard() {
+  try {
+    const s = localStorage.getItem("imjang_pro_card");
+    return s ? JSON.parse(s) : { officeName:"", managerName:MANAGER_NAME, phone:CONTACT_PHONE, address:"", blog:"sojangnote.com" };
+  } catch { return { officeName:"", managerName:MANAGER_NAME, phone:CONTACT_PHONE, address:"", blog:"sojangnote.com" }; }
+}
+function getPriceText(v) {
+  const rt = v.rentalType || "jeonse";
+  switch (v.dealType) {
+    case "sale": return v.salePrice ? `매매 ${formatMan(v.salePrice)}만원` : "";
+    case "rental":
+    case "saleRightRental":
+      if (rt === "jeonse") return v.jeonsePrice ? `전세 ${formatMan(v.jeonsePrice)}만원` : "";
+      return [v.deposit?`보증금 ${formatMan(v.deposit)}만원`:"", v.monthlyRent?`월 ${formatMan(v.monthlyRent)}만원`:""].filter(Boolean).join(" / ");
+    case "saleRight": {
+      const t = (Number(v.basePrice)||0)+(Number(v.optionPrice)||0)+(Number(v.premium)||0);
+      if (t === 0) return "";
+      const pText = v.premium ? ` · P ${formatMan(v.premium)}만원` : "";
+      return `총분양가 ${t.toLocaleString("ko-KR")}만원${pText}`;
+    }
+    default:
+      if (v.jeonsePrice) return `전세 ${formatMan(v.jeonsePrice)}만원`;
+      return [v.deposit?`보증금 ${formatMan(v.deposit)}만원`:"", v.monthlyRent?`월 ${formatMan(v.monthlyRent)}만원`:""].filter(Boolean).join(" / ");
+  }
+}
+function formatPhone(raw) {
+  const d = raw.replace(/[^0-9]/g, '').slice(0, 11);
+  if (!d) return '';
+  if (d.startsWith('02')) {
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return `${d.slice(0,2)}-${d.slice(2)}`;
+    if (d.length <= 9) return `${d.slice(0,2)}-${d.slice(2,5)}-${d.slice(5)}`;
+    return `${d.slice(0,2)}-${d.slice(2,6)}-${d.slice(6)}`;
+  }
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0,3)}-${d.slice(3)}`;
+  if (d.length <= 10) return `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;
+  return `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`;
+}
+function buildSmsMessage(sel, card, includeCard) {
+  if (!sel.length) return "";
+  const lines = sel.map((v,i) => {
+    const price = getPriceText(v);
+    const isH = v.category === "house";
+    const area = isH
+      ? [v.rooms&&`방${v.rooms}`, v.bathrooms&&`욕실${v.bathrooms}`].filter(Boolean).join("/")
+      : [v.area, v.type].filter(Boolean).join("/");
+    const loc = isH ? v.address : [v.dong,v.ho].filter(Boolean).join(" ");
+    const mi = v.immediateMove ? "\n   📅 즉시 입주 가능" : v.negotiateMove ? "\n   📅 입주 협의 가능" : v.moveInDate ? `\n   📅 입주 가능 ${v.moveInDate.replace(/-/g,".")}` : "";
+    return `${i+1}. ${v.apartmentName}${area?` (${area})`:""}\n   ${price}${mi}${loc?`\n   ${loc}`:""}`;
+  }).join("\n\n");
+  const name = card.managerName || MANAGER_NAME;
+  let msg = `안녕하세요, ${name} 소장입니다.\n오늘 안내해 드린 매물 정보입니다.\n\n${lines}\n\n더 궁금하신 점은 편하게 연락 주세요 :)`;
+  if (includeCard) {
+    const parts=[];
+    if (card.officeName)  parts.push(`🏢 ${card.officeName}`);
+    if (card.managerName) parts.push(`👤 ${card.managerName} 소장`);
+    if (card.phone)       parts.push(`📞 ${card.phone}`);
+    if (card.address)     parts.push(`📍 ${card.address}`);
+    if (card.blog)        parts.push(`🔗 ${card.blog}`);
+    if (parts.length) msg += `\n\n──────────────\n${parts.join("\n")}`;
+  } else { msg += "\n📝 sojangnote.com"; }
+  return msg;
+}
+
+/* ══════════════════════════════════════════════════
+   FORM 공통 스타일 (정적 상수 → 렌더마다 재생성 없음)
+══════════════════════════════════════════════════ */
+const BASE_INPUT = {
+  width:"100%", background:"#f8fafc", border:"1px solid #e2e8f0",
+  color:"#1e293b", borderRadius:9, padding:"10px 12px",
+  fontSize:14, outline:"none", transition:"border-color .15s,box-shadow .15s",
+};
+const CARET_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`;
+const MAN_STYLE = { position:"absolute", right:11, top:"50%", transform:"translateY(-50%)", fontSize:12, color:"#94a3b8", pointerEvents:"none", fontWeight:600 };
+const FL_STYLE  = { display:"block", fontSize:11, fontWeight:700, color:"#94a3b8", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.5px" };
+
+function FLabel({ text }) { return <label style={FL_STYLE}>{text}</label>; }
+
+/* ══════════════════════════════════════════════════
+   ★ 최적화된 입력 컴포넌트
+   - React.memo: props 변경 시에만 리렌더
+   - 내부 focus 상태: 다른 필드 입력 시 리렌더 차단
+══════════════════════════════════════════════════ */
+const PriceInput = memo(({ name, label, placeholder, value, onChange }) => {
+  const [foc, setFoc] = useState(false);
+  return (
+    <div>
+      <FLabel text={label}/>
+      <div style={{position:"relative"}}>
+        <input
+          name={name} value={value} onChange={onChange}
+          placeholder={placeholder} autoComplete="off" inputMode="numeric"
+          onFocus={()=>setFoc(true)} onBlur={()=>setFoc(false)}
+          style={{...BASE_INPUT, borderColor:foc?"#f59e0b":"#e2e8f0", boxShadow:foc?"0 0 0 3px rgba(245,158,11,.12)":"none", paddingRight:42}}
+        />
+        <span style={MAN_STYLE}>만원</span>
+      </div>
+    </div>
+  );
+});
+
+const TextInput = memo(({ name, label, placeholder, value, onChange }) => {
+  const [foc, setFoc] = useState(false);
+  return (
+    <div>
+      <FLabel text={label}/>
+      <input
+        name={name} value={value} onChange={onChange}
+        placeholder={placeholder}
+        onFocus={()=>setFoc(true)} onBlur={()=>setFoc(false)}
+        style={{...BASE_INPUT, borderColor:foc?"#f59e0b":"#e2e8f0", boxShadow:foc?"0 0 0 3px rgba(245,158,11,.12)":"none"}}
+      />
+    </div>
+  );
+});
+
+const PhoneInput = memo(({ name, label, placeholder, value, onChange }) => {
+  const [foc, setFoc] = useState(false);
+  function handlePhone(e) {
+    onChange({ target: { name, value: formatPhone(e.target.value) } });
+  }
+  return (
+    <div>
+      <FLabel text={label}/>
+      <div style={{position:"relative"}}>
+        <span style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",lineHeight:0}}>
+          <IconPhone size={12} color={foc?"#f59e0b":"#94a3b8"}/>
+        </span>
+        <input
+          name={name} value={value} onChange={handlePhone}
+          placeholder={placeholder} type="tel" inputMode="numeric" autoComplete="off"
+          onFocus={()=>setFoc(true)} onBlur={()=>setFoc(false)}
+          style={{...BASE_INPUT, borderColor:foc?"#f59e0b":"#e2e8f0", boxShadow:foc?"0 0 0 3px rgba(245,158,11,.12)":"none", paddingLeft:32}}
+        />
+      </div>
+    </div>
+  );
+});
+
+/* ══════════════════════════════════════════════════
+   LICENSE GATE
+══════════════════════════════════════════════════ */
+function LicenseGate({ onActivate }) {
+  const [serial,setSerial]=useState(""); const [errType,setErrType]=useState(null);
+  const [errMsg,setErrMsg]=useState(""); const [sk,setSk]=useState(0);
+  const inputRef=useRef(null);
+  useEffect(()=>{ inputRef.current&&inputRef.current.focus(); },[]);
+  function handleChange(e){ setSerial(formatSerial(e.target.value)); setErrType(null); setErrMsg(""); }
+  function shake(t,m){ setErrType(t); setErrMsg(m); setSk(k=>k+1); }
+  function handleSubmit(e){
+    e.preventDefault();
+    const r=validateSerial(serial);
+    if (!r.valid){ shake("inv","유효하지 않은 시리얼 번호입니다."); return; }
+    if (r.expired){ shake("exp",`사용 기간이 만료되었습니다.\n만료일: ${r.expiryDate.replace(/-/g,".")}\n연장 문의: ${CONTACT_PHONE}`); return; }
+    localStorage.setItem("imjang_pro_serial",serial.trim().toUpperCase());
+    onActivate({ serial:serial.trim().toUpperCase(), expiryDate:r.expiryDate, daysLeft:r.daysLeft });
+  }
+  return (
+    <div className="lock-bg" style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div style={{ width:"100%", maxWidth:400 }}>
+        <div style={{ textAlign:"center", marginBottom:28 }}>
+          <div style={{ width:68,height:68,background:"linear-gradient(135deg,#f59e0b,#d97706)",borderRadius:20,display:"inline-flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 28px rgba(245,158,11,.38)",marginBottom:14 }}>
+            <IconBuilding size={34} color="white"/>
+          </div>
+          <h1 style={{ fontSize:22,fontWeight:800,color:"#1e293b",marginBottom:4,letterSpacing:"-0.5px" }}>임장메이트 <span style={{color:"#f59e0b"}}>PRO</span></h1>
+          <p style={{ fontSize:12,color:"#94a3b8" }}>공인중개사 전용 매물 방문 관리</p>
+        </div>
+        <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:18,padding:"28px 24px 24px",boxShadow:"0 4px 30px rgba(0,0,0,.07)" }}>
+          <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:22,paddingBottom:18,borderBottom:"1px solid #f1f5f9" }}>
+            <div style={{ width:36,height:36,background:"rgba(245,158,11,.10)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center" }}><IconKey size={18} color="#d97706"/></div>
+            <div><div style={{fontWeight:700,fontSize:15}}>라이선스 활성화</div><div style={{fontSize:11,color:"#94a3b8",marginTop:1}}>시리얼 번호를 입력하세요</div></div>
+          </div>
+          <form onSubmit={handleSubmit}>
+            <label style={FL_STYLE}>시리얼 번호</label>
+            <div key={`s${sk}`} className={sk>0?"shake":""}>
+              <input ref={inputRef} value={serial} onChange={handleChange} placeholder="XXXX-XXXX-XXXX-XXXX" maxLength={19} autoComplete="off" spellCheck={false}
+                style={{ width:"100%",background:errType?"rgba(254,242,242,.8)":"#f8fafc",border:`1.5px solid ${errType?"#fca5a5":"#e2e8f0"}`,color:errType?"#dc2626":"#1e293b",borderRadius:10,padding:"13px 16px",fontSize:16,fontWeight:700,letterSpacing:"2px",outline:"none",textAlign:"center",fontFamily:"'Courier New',monospace" }}/>
+            </div>
+            {errType&&(
+              <div style={{marginTop:12,padding:"12px 14px",background:"rgba(239,68,68,.05)",border:"1px solid rgba(220,38,38,.2)",borderRadius:10,display:"flex",gap:10,alignItems:"flex-start"}}>
+                <IconAlertCircle size={15} color="#dc2626"/><div style={{fontSize:12,color:"#dc2626",lineHeight:1.75,whiteSpace:"pre-line",fontWeight:500}}>{errMsg}</div>
+              </div>
+            )}
+            <button type="submit" style={{width:"100%",marginTop:16,padding:"13px",background:"linear-gradient(135deg,#f59e0b,#d97706)",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7,boxShadow:"0 4px 16px rgba(245,158,11,.38)"}}>
+              <IconShield size={15} color="white"/>활성화
+            </button>
+          </form>
+        </div>
+        <p style={{textAlign:"center",marginTop:18,fontSize:12,color:"#94a3b8"}}>구매 문의: <strong style={{color:"#64748b"}}>{CONTACT_PHONE}</strong></p>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   EMPTY FORM
+══════════════════════════════════════════════════ */
+const EMPTY_FORM = {
+  category:"apt", dealType:"rental", rentalType:"jeonse",
+  apartmentName:"", dong:"", ho:"", area:"", type:"",
+  address:"", rooms:"", bathrooms:"", parking:"가능",
+  salePrice:"", jeonsePrice:"", deposit:"", monthlyRent:"",
+  basePrice:"", optionPrice:"", premium:"",
+  officetelResidential:false, officetelBusiness:false,
+  moveInDate:"", immediateMove:false, negotiateMove:false,
+  coBrokerAgency:"", coBrokerPhone:"",
+  hasPet:"가능", visitPhone:"", visitTime:"", isVacant:false,
+  appointmentStatus:"가능", memo:"",
+};
+
+/* ══════════════════════════════════════════════════
+   PROPERTY CARD
+══════════════════════════════════════════════════ */
+function PropertyCard({ visit, index, onDelete, onEdit, isSelected, onToggleSelect }) {
+  const [confirmDel, setConfirmDel] = useState(false);
+  const ss      = getStatusStyle(visit.appointmentStatus);
+  const price   = getPriceText(visit);
+  const isHouse = visit.category === "house";
+  const isSaleRight = visit.dealType === "saleRight";
+  const dealLabel = visit.dealType === "rental"
+    ? (visit.rentalType === "monthly" ? "월세" : "전세")
+    : (DEAL_LABELS[visit.dealType] || "");
+
+  function handleDel() {
+    if (confirmDel) { onDelete(visit.id); }
+    else { setConfirmDel(true); setTimeout(() => setConfirmDel(false), 3000); }
+  }
+  const PhoneChip = ({ phone }) => (
+    <a href={`tel:${phone}`} onClick={e=>e.stopPropagation()} style={{display:"inline-flex",alignItems:"center",gap:2,fontSize:10,fontWeight:700,color:"#2563eb",background:"rgba(37,99,235,.08)",border:"1px solid rgba(37,99,235,.2)",borderRadius:5,padding:"2px 7px",textDecoration:"none",minHeight:22}}>
+      <IconPhone size={9} color="#2563eb"/>전화
+    </a>
+  );
+
+  return (
+    <div className="slide-up" style={{animationDelay:`${Math.min(index*.04,.3)}s`,background:"#fff",borderRadius:16,overflow:"hidden",boxShadow:isSelected?"0 0 0 2.5px #2563eb, 0 4px 20px rgba(37,99,235,.14)":"0 2px 14px rgba(0,0,0,.06)",transition:"box-shadow .2s",marginBottom:12}}>
+      <div style={{height:4,background:ss.color,opacity:.8}}/>
+      <div style={{padding:"13px 14px"}}>
+        {/* top row */}
+        <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:9}}>
+          <div onClick={()=>onToggleSelect(visit.id)} style={{flexShrink:0,width:22,height:22,borderRadius:"50%",border:`2.5px solid ${isSelected?"#2563eb":"#d1d5db"}`,background:isSelected?"#2563eb":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .15s",minWidth:22}}>
+            {isSelected&&<IconCheck size={11} color="white"/>}
+          </div>
+          <span style={{background:ss.bg,color:ss.color,border:`1px solid ${ss.border}`,borderRadius:20,fontSize:11,fontWeight:700,padding:"3px 9px",display:"inline-flex",alignItems:"center",gap:3,flexShrink:0}}>
+            <StatusIcon status={visit.appointmentStatus}/>{visit.appointmentStatus}
+          </span>
+          <span style={{fontSize:10,fontWeight:700,color:"#94a3b8",background:"#f1f5f9",borderRadius:6,padding:"2px 7px",flexShrink:0}}>{dealLabel}</span>
+          {visit.category==="sale"&&<span style={{fontSize:10,fontWeight:700,color:"#8b5cf6",background:"rgba(139,92,246,.08)",borderRadius:6,padding:"2px 7px",flexShrink:0}}>분양권</span>}
+          {isHouse&&<span style={{fontSize:10,fontWeight:700,color:"#d97706",background:"rgba(245,158,11,.08)",borderRadius:6,padding:"2px 7px",flexShrink:0}}>주택</span>}
+          {visit.isVacant&&<span style={{fontSize:10,fontWeight:800,color:"#fff",background:"#059669",borderRadius:6,padding:"2px 8px",flexShrink:0}}>공실</span>}
+          <div style={{flex:1}}/>
+          {visit.visitTime&&<div style={{display:"flex",alignItems:"center",gap:3,fontSize:13,fontWeight:600,color:"#475569",flexShrink:0}}><IconClock size={12} color="#94a3b8"/>{visit.visitTime}</div>}
+          <button onClick={()=>onEdit(visit)} style={{background:"transparent",border:"none",color:"#94a3b8",borderRadius:7,padding:"4px 8px",cursor:"pointer",display:"flex",alignItems:"center",gap:3,fontSize:11,minHeight:28,flexShrink:0}}>
+            <IconEdit size={13}/>
+          </button>
+          <button onClick={handleDel} style={{background:confirmDel?"rgba(239,68,68,.08)":"transparent",border:confirmDel?"1px solid rgba(239,68,68,.3)":"none",color:confirmDel?"#dc2626":"#d1d5db",borderRadius:7,padding:"4px 8px",cursor:"pointer",display:"flex",alignItems:"center",gap:3,fontSize:11,minHeight:28,flexShrink:0}}>
+            <IconTrash size={12}/>{confirmDel?"확인":""}
+          </button>
+        </div>
+
+        {/* 아파트/주택명 */}
+        <div style={{fontSize:20,fontWeight:800,color:"#0f172a",letterSpacing:"-0.5px",lineHeight:1.2,marginBottom:4}}>{visit.apartmentName}</div>
+
+        {/* 가격 */}
+        {price&&<div style={{fontSize:17,fontWeight:700,color:"#2563eb",marginBottom:4}}>{price}</div>}
+
+        {/* 분양권 상세 */}
+        {isSaleRight&&(visit.basePrice||visit.optionPrice||visit.premium)&&(
+          <div style={{fontSize:11,color:"#94a3b8",marginBottom:6,display:"flex",gap:8,flexWrap:"wrap"}}>
+            {visit.basePrice&&<span>분양가 {formatMan(visit.basePrice)}만원</span>}
+            {visit.optionPrice&&<span>+ 옵션 {formatMan(visit.optionPrice)}만원</span>}
+            {visit.premium&&<span>+ P {formatMan(visit.premium)}만원</span>}
+          </div>
+        )}
+
+        {/* 위치/상세 정보 */}
+        <div style={{fontSize:13,color:"#94a3b8",marginBottom:11}}>
+          {isHouse ? (
+            <>
+              {visit.address&&<span>{visit.address}</span>}
+              {[visit.dong,visit.ho].filter(Boolean).length>0&&(
+                <span style={{marginLeft:visit.address?6:0}}>{visit.address&&"· "}{[visit.dong,visit.ho].filter(Boolean).join(" ")}</span>
+              )}
+              {(visit.rooms||visit.bathrooms)&&(
+                <span style={{marginLeft:6}}>
+                  · {[visit.rooms&&`방 ${visit.rooms}개`, visit.bathrooms&&`욕실 ${visit.bathrooms}개`].filter(Boolean).join(" · ")}
+                </span>
+              )}
+              {visit.area&&<span style={{marginLeft:6}}>· {visit.area}</span>}
+            </>
+          ) : (
+            <>
+              {[visit.dong,visit.ho].filter(Boolean).join(" ")}
+              {(visit.area||visit.type)&&<span> · {[visit.area,visit.type].filter(Boolean).join("/")}</span>}
+              {(visit.officetelResidential||visit.officetelBusiness)&&(
+                <span style={{marginLeft:6,fontSize:11,color:"#d97706",fontWeight:600}}>
+                  {visit.officetelResidential?"주거용":"업무용"} 오피스텔
+                </span>
+              )}
+            </>
+          )}
+        </div>
+
+        <div style={{borderTop:"1px solid #f1f5f9",paddingTop:9}}>
+          <div style={{display:"flex",flexWrap:"wrap",gap:"7px 14px",alignItems:"center"}}>
+            {visit.visitPhone&&(
+              <div style={{display:"flex",alignItems:"center",gap:5}}>
+                <IconPhone size={11} color="#94a3b8"/>
+                <span style={{fontSize:12,color:"#64748b"}}>{visit.visitPhone}</span>
+                <PhoneChip phone={visit.visitPhone}/>
+              </div>
+            )}
+            {(visit.immediateMove||visit.negotiateMove||visit.moveInDate)&&(
+              <div style={{display:"flex",alignItems:"center",gap:4,fontSize:12}}>
+                <IconCalendar size={11} color="#94a3b8"/>
+                {visit.immediateMove
+                  ? <span style={{color:"#059669",fontWeight:700}}>즉시입주</span>
+                  : visit.negotiateMove
+                    ? <span style={{color:"#d97706",fontWeight:700}}>입주협의</span>
+                    : <span style={{color:"#64748b"}}>{visit.moveInDate.replace(/-/g,".")}</span>}
+              </div>
+            )}
+            <div style={{display:"flex",alignItems:"center",gap:3,fontSize:12}}>
+              <span>🐶🐱</span>
+              <span style={{fontWeight:600,color:visit.hasPet==="불가능"?"#dc2626":"#059669"}}>{visit.hasPet||"가능"}</span>
+            </div>
+            {isHouse&&visit.parking&&(
+              <div style={{display:"flex",alignItems:"center",gap:3,fontSize:12}}>
+                <span>🚗</span>
+                <span style={{fontWeight:600,color:visit.parking==="불가능"?"#dc2626":visit.parking==="협의"?"#d97706":"#059669"}}>주차 {visit.parking}</span>
+              </div>
+            )}
+          </div>
+          {(visit.coBrokerAgency||visit.coBrokerPhone)&&(
+            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:7,flexWrap:"wrap"}}>
+              <IconUsers size={11} color="#94a3b8"/>
+              {visit.coBrokerAgency&&<span style={{fontSize:12,color:"#64748b"}}>{visit.coBrokerAgency}</span>}
+              {visit.coBrokerPhone&&<><span style={{fontSize:12,color:"#64748b"}}>{visit.coBrokerPhone}</span><PhoneChip phone={visit.coBrokerPhone}/></>}
+            </div>
+          )}
+          {visit.memo&&<div style={{marginTop:7,fontSize:12,color:"#64748b",lineHeight:1.6,display:"flex",gap:5}}><span>📝</span><span>{visit.memo}</span></div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   PROPERTY MODAL (등록 + 수정 통합)
+══════════════════════════════════════════════════ */
+function PropertyModal({ initialData, onSave, onClose }) {
+  const [form, setForm] = useState(() => initialData ? { ...initialData } : { ...EMPTY_FORM });
+  const isEdit = !!initialData;
+
+  /* ★ useCallback: 핸들러 안정화 → memo 컴포넌트 불필요한 리렌더 방지 */
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setForm(p => ({ ...p, [name]: value }));
+  }, []);
+
+  function changeCat(newCat) {
+    setForm(p => ({
+      ...p,
+      category: newCat,
+      dealType: VALID_DEALS[newCat].includes(p.dealType) ? p.dealType : DEFAULT_DEAL[newCat],
+    }));
+  }
+  function handleSubmit() {
+    if (!form.apartmentName.trim()) { alert("이름을 입력해주세요."); return; }
+    onSave(isEdit ? { ...form } : { ...form, id: nextId++ });
+  }
+
+  const deals   = VALID_DEALS[form.category];
+  const isHouse = form.category === "house";
+  const showOffictel = form.category === "apt" && (form.dealType === "rental" || form.dealType === "saleRightRental");
+
+  /* ★ useMemo: 분양권 합계 계산 최적화 */
+  const totalSaleRight = useMemo(() =>
+    (Number(form.basePrice)||0) + (Number(form.optionPrice)||0) + (Number(form.premium)||0),
+    [form.basePrice, form.optionPrice, form.premium]
+  );
+
+  const sS = { ...BASE_INPUT, cursor:"pointer", appearance:"none", WebkitAppearance:"none", paddingRight:28, backgroundImage:CARET_SVG, backgroundRepeat:"no-repeat", backgroundPosition:"right 9px center" };
+
+  return (
+    <div className="modal-bg" style={{position:"absolute",inset:0,zIndex:300,background:"rgba(0,0,0,.45)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={onClose}>
+      <div className="modal-sheet" style={{background:"#fff",borderRadius:"20px 20px 0 0",maxHeight:"94%",display:"flex",flexDirection:"column",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+
+        {/* ── Sticky 헤더 ── */}
+        <div style={{flexShrink:0}}>
+          <div style={{padding:"16px 18px 10px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <div style={{fontWeight:800,fontSize:17}}>{isEdit ? "매물 수정" : "매물 등록"}</div>
+              <div style={{fontSize:11,color:"#94a3b8",marginTop:1}}>{isEdit ? "정보를 수정하고 저장하세요" : "카테고리를 선택하고 정보를 입력하세요"}</div>
+            </div>
+            <button onClick={onClose} style={{width:32,height:32,background:"#f1f5f9",border:"none",borderRadius:"50%",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <IconX size={14} color="#64748b"/>
+            </button>
+          </div>
+
+          {/* 대분류 탭 */}
+          <div style={{padding:"0 18px 10px",display:"flex",gap:5}}>
+            {["apt","sale","house"].map(cat => {
+              const active = form.category===cat;
+              return (
+                <button key={cat} onClick={()=>changeCat(cat)} style={{flex:1,padding:"9px 4px",background:active?"#1e293b":"#f8fafc",color:active?"#fff":"#64748b",border:`1px solid ${active?"#1e293b":"#e2e8f0"}`,borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",transition:"all .15s",lineHeight:1.3}}>
+                  {CAT_LABELS[cat]}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 거래유형 토글 */}
+          <div style={{padding:"0 18px 12px"}}>
+            <div style={{display:"flex",background:"#f1f5f9",borderRadius:10,padding:3,gap:3}}>
+              {deals.map(dt => {
+                const active = form.dealType===dt;
+                return (
+                  <button key={dt} onClick={()=>setForm(p=>({...p,dealType:dt}))} style={{flex:1,padding:"7px 6px",background:active?"#fff":"transparent",border:"none",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",color:active?"#1e293b":"#94a3b8",boxShadow:active?"0 1px 4px rgba(0,0,0,.10)":"none",transition:"all .15s"}}>
+                    {DEAL_LABELS[dt]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{borderBottom:"1px solid #f1f5f9"}}/>
+        </div>
+
+        {/* ── 스크롤 폼 ── */}
+        <div style={{overflowY:"auto",flex:1,padding:"14px 18px 28px",display:"flex",flexDirection:"column",gap:11}}>
+
+          {/* 이름 (주택명 / 아파트명) */}
+          <TextInput
+            name="apartmentName"
+            label={isHouse ? "주택명 *" : "아파트명 *"}
+            placeholder=""
+            value={form.apartmentName}
+            onChange={handleChange}
+          />
+
+          {/* 주소 (주택 전용) */}
+          {isHouse && (
+            <div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:5}}>
+                <FLabel text="주소"/>
+                <a href="https://www.juso.go.kr/" target="_blank" rel="noopener noreferrer"
+                  style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:11,fontWeight:700,color:"#2563eb",background:"rgba(37,99,235,.07)",border:"1px solid rgba(37,99,235,.22)",borderRadius:6,padding:"3px 8px",textDecoration:"none"}}>
+                  <IconHome size={10} color="#2563eb"/>도로명주소
+                </a>
+              </div>
+              <input name="address" value={form.address} onChange={handleChange} placeholder=""
+                style={{...BASE_INPUT}}/>
+            </div>
+          )}
+
+          {/* 동 / 호 (전 카테고리 공통) */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <TextInput name="dong" label="동" placeholder="" value={form.dong} onChange={handleChange}/>
+            <TextInput name="ho"   label="호수" placeholder="" value={form.ho} onChange={handleChange}/>
+          </div>
+
+          {/* 평형 + 타입 or 방 수 */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <TextInput name="area" label="평형" placeholder="" value={form.area} onChange={handleChange}/>
+            {isHouse
+              ? <TextInput name="rooms" label="방 수" placeholder="" value={form.rooms} onChange={handleChange}/>
+              : <TextInput name="type"  label="타입"  placeholder="" value={form.type} onChange={handleChange}/>
+            }
+          </div>
+
+          {/* 욕실 수 + 주차 (주택 전용) */}
+          {isHouse && (
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <TextInput name="bathrooms" label="욕실 수" placeholder="" value={form.bathrooms} onChange={handleChange}/>
+              <div>
+                <FLabel text="주차"/>
+                <select name="parking" value={form.parking} onChange={handleChange} style={sS}>
+                  <option value="가능">가능</option>
+                  <option value="불가능">불가능</option>
+                  <option value="협의">협의</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* ── 조건부 가격 입력 ── */}
+
+          {/* 매매가 */}
+          {form.dealType==="sale" && (
+            <PriceInput name="salePrice" label="매매가 (만원)" placeholder="" value={form.salePrice} onChange={handleChange}/>
+          )}
+
+          {/* 전월세 서브 선택 */}
+          {(form.dealType==="rental"||form.dealType==="saleRightRental") && (
+            <div>
+              <FLabel text="전세 / 월세 선택"/>
+              <div style={{display:"flex",background:"#f1f5f9",borderRadius:9,padding:3,gap:3}}>
+                {[["jeonse","전세"],["monthly","월세"]].map(([rt,lb])=>{
+                  const a = form.rentalType===rt;
+                  return (
+                    <button key={rt} onClick={()=>setForm(p=>({...p,rentalType:rt}))} style={{flex:1,padding:"8px 6px",background:a?"#fff":"transparent",border:"none",borderRadius:7,fontSize:13,fontWeight:700,cursor:"pointer",color:a?"#1e293b":"#94a3b8",boxShadow:a?"0 1px 4px rgba(0,0,0,.10)":"none",transition:"all .15s"}}>
+                      {lb}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 전세가 */}
+          {(form.dealType==="rental"||form.dealType==="saleRightRental") && form.rentalType==="jeonse" && (
+            <PriceInput name="jeonsePrice" label="전세가 (만원)" placeholder="" value={form.jeonsePrice} onChange={handleChange}/>
+          )}
+
+          {/* 보증금 + 월세 */}
+          {(form.dealType==="rental"||form.dealType==="saleRightRental") && form.rentalType==="monthly" && (
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <PriceInput name="deposit"     label="보증금 (만원)" placeholder="" value={form.deposit}     onChange={handleChange}/>
+              <PriceInput name="monthlyRent" label="월세 (만원)"   placeholder="" value={form.monthlyRent} onChange={handleChange}/>
+            </div>
+          )}
+
+          {/* 분양권매매 */}
+          {form.dealType==="saleRight" && (
+            <>
+              <PriceInput name="basePrice"   label="분양가 (만원)"    placeholder="" value={form.basePrice}   onChange={handleChange}/>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <PriceInput name="optionPrice" label="옵션가 (만원)"   placeholder="" value={form.optionPrice} onChange={handleChange}/>
+                <PriceInput name="premium"     label="프리미엄P (만원)" placeholder="" value={form.premium}     onChange={handleChange}/>
+              </div>
+              <div>
+                <FLabel text="총분양가 (자동 계산)"/>
+                <div style={{background:"rgba(37,99,235,.06)",border:`1.5px solid ${totalSaleRight>0?"rgba(37,99,235,.3)":"#e2e8f0"}`,borderRadius:9,padding:"11px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div>
+                    <div style={{fontSize:18,fontWeight:800,color:totalSaleRight>0?"#2563eb":"#94a3b8"}}>
+                      {totalSaleRight>0 ? `${totalSaleRight.toLocaleString("ko-KR")}만원` : "자동 계산됩니다"}
+                    </div>
+                    {totalSaleRight>0&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>분양가 + 옵션가 + 프리미엄</div>}
+                  </div>
+                  {totalSaleRight>0&&<div style={{fontSize:12,fontWeight:700,color:"#2563eb"}}>= 총 {totalSaleRight.toLocaleString("ko-KR")}만</div>}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* 오피스텔 체크박스 */}
+          {showOffictel && (
+            <div>
+              <FLabel text="오피스텔 종류 (해당 시 선택)"/>
+              <div style={{display:"flex",gap:16,padding:"8px 0"}}>
+                {[["officetelResidential","주거용 오피스텔"],["officetelBusiness","업무용 오피스텔"]].map(([key,label]) => (
+                  <label key={key} style={{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:13,fontWeight:600,color:form[key]?"#059669":"#64748b"}}>
+                    <div onClick={()=>setForm(p=>({...p,[key]:!p[key]}))} style={{width:20,height:20,borderRadius:5,border:`2px solid ${form[key]?"#059669":"#d1d5db"}`,background:form[key]?"#059669":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s",cursor:"pointer",minWidth:20}}>
+                      {form[key]&&<IconCheck size={11} color="white"/>}
+                    </div>
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 입주가능일 + 즉시입주 + 입주협의 */}
+          <div>
+            <FLabel text="입주 가능일"/>
+            <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:10,alignItems:"center"}}>
+              <input type="date" name="moveInDate"
+                value={(form.immediateMove||form.negotiateMove)?"":form.moveInDate}
+                disabled={form.immediateMove||form.negotiateMove}
+                onChange={handleChange}
+                style={{...BASE_INPUT,...((form.immediateMove||form.negotiateMove)?{opacity:.35,cursor:"not-allowed"}:{})}}/>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",whiteSpace:"nowrap"}}>
+                  <div onClick={()=>setForm(p=>({...p,immediateMove:!p.immediateMove,negotiateMove:false,moveInDate:""}))} style={{width:20,height:20,borderRadius:5,border:`2px solid ${form.immediateMove?"#059669":"#d1d5db"}`,background:form.immediateMove?"#059669":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s",cursor:"pointer",minWidth:20}}>
+                    {form.immediateMove&&<IconCheck size={11} color="white"/>}
+                  </div>
+                  <span style={{fontSize:13,fontWeight:600,color:form.immediateMove?"#059669":"#64748b"}}>즉시입주</span>
+                </label>
+                <label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",whiteSpace:"nowrap"}}>
+                  <div onClick={()=>setForm(p=>({...p,negotiateMove:!p.negotiateMove,immediateMove:false,moveInDate:""}))} style={{width:20,height:20,borderRadius:5,border:`2px solid ${form.negotiateMove?"#d97706":"#d1d5db"}`,background:form.negotiateMove?"#d97706":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s",cursor:"pointer",minWidth:20}}>
+                    {form.negotiateMove&&<IconCheck size={11} color="white"/>}
+                  </div>
+                  <span style={{fontSize:13,fontWeight:600,color:form.negotiateMove?"#d97706":"#64748b"}}>입주협의</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <TextInput  name="coBrokerAgency" label="공동중개사"       placeholder="" value={form.coBrokerAgency} onChange={handleChange}/>
+          <PhoneInput name="coBrokerPhone"  label="공동중개사 연락처" placeholder="" value={form.coBrokerPhone}  onChange={handleChange}/>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <div>
+              <FLabel text="반려동물"/>
+              <select name="hasPet" value={form.hasPet} onChange={handleChange} style={sS}>
+                <option value="가능">가능</option><option value="불가능">불가능</option>
+              </select>
+            </div>
+            <div>
+              <FLabel text="약속 상태"/>
+              <select name="appointmentStatus" value={form.appointmentStatus} onChange={handleChange} style={sS}>
+                <option value="가능">가능</option><option value="확인중">확인중</option><option value="방문완료">방문완료</option><option value="불가">불가</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <PhoneInput name="visitPhone" label="방문 연락처" placeholder="" value={form.visitPhone} onChange={handleChange}/>
+            <div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:5}}>
+                <FLabel text="방문 시간"/>
+                <label style={{display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}>
+                  <div onClick={()=>setForm(p=>({...p,isVacant:!p.isVacant}))}
+                    style={{width:18,height:18,borderRadius:4,border:`2px solid ${form.isVacant?"#059669":"#d1d5db"}`,background:form.isVacant?"#059669":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s",cursor:"pointer",flexShrink:0}}>
+                    {form.isVacant&&<IconCheck size={10} color="white"/>}
+                  </div>
+                  <span style={{fontSize:12,fontWeight:700,color:form.isVacant?"#059669":"#94a3b8",whiteSpace:"nowrap"}}>공실</span>
+                </label>
+              </div>
+              <input type="time" name="visitTime" value={form.visitTime} onChange={handleChange} style={BASE_INPUT}/>
+            </div>
+          </div>
+
+          <div>
+            <FLabel text="메모"/>
+            <textarea name="memo" value={form.memo} onChange={handleChange} placeholder="특이사항이나 메모를 입력하세요" rows={3}
+              style={{...BASE_INPUT,resize:"vertical",minHeight:64,lineHeight:1.6}}/>
+          </div>
+
+          <button onClick={handleSubmit} style={{width:"100%",padding:"14px",background:isEdit?"linear-gradient(135deg,#2563eb,#1d4ed8)":"linear-gradient(135deg,#f59e0b,#d97706)",color:"white",border:"none",borderRadius:11,fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:isEdit?"0 4px 14px rgba(37,99,235,.35)":"0 4px 14px rgba(245,158,11,.35)",marginTop:4}}>
+            {isEdit ? <IconCheck size={16} color="white"/> : <IconPlus size={16} color="white"/>}
+            {isEdit ? "수정 저장" : "매물 등록 완료"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════════════ */
+function Header({ licenseInfo }) {
+  const [time, setTime] = useState(new Date());
+  useEffect(()=>{ const t=setInterval(()=>setTime(new Date()),1000); return ()=>clearInterval(t); },[]);
+  const isWarn = licenseInfo && licenseInfo.daysLeft<=30;
+  return (
+    <header style={{background:"#fff",borderBottom:"1px solid #e2e8f0",height:54,display:"flex",alignItems:"center",padding:"0 16px",justifyContent:"space-between",flexShrink:0,boxShadow:"0 1px 8px rgba(0,0,0,.04)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:9}}>
+        <div style={{width:34,height:34,background:"linear-gradient(135deg,#f59e0b,#d97706)",borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(245,158,11,.35)"}}>
+          <IconBuilding size={18} color="white"/>
+        </div>
+        <div>
+          <div style={{fontWeight:800,fontSize:15,letterSpacing:"-0.5px"}}>임장메이트 <span style={{color:"#f59e0b"}}>PRO</span></div>
+          <div style={{fontSize:9,color:"#94a3b8"}}>공인중개사 전용</div>
+        </div>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        {licenseInfo&&(
+          <div title={`만료: ${licenseInfo.expiryDate.replace(/-/g,".")}`} style={{width:28,height:28,background:isWarn?"rgba(239,68,68,.07)":"rgba(16,185,129,.07)",border:`1px solid ${isWarn?"rgba(220,38,38,.25)":"rgba(16,185,129,.25)"}`,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+            <IconShield size={13} color={isWarn?"#dc2626":"#059669"}/>
+            {isWarn&&<span style={{position:"absolute",top:-3,right:-3,width:7,height:7,background:"#dc2626",borderRadius:"50%",border:"2px solid #fff"}}/>}
+          </div>
+        )}
+        <div style={{background:"rgba(245,158,11,.06)",border:"1px solid rgba(245,158,11,.2)",borderRadius:7,padding:"4px 10px",fontSize:13,fontWeight:700,color:"#d97706",fontVariantNumeric:"tabular-nums"}}>
+          {time.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",hour12:false})}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   LIST VIEW
+══════════════════════════════════════════════════ */
+function ListView({ visits, selectedIds, onDelete, onEdit, onToggleSelect, sortMode, onSortToggle, onSelectAll, onDeselectAll }) {
+  const allSel = visits.length>0 && selectedIds.size===visits.length;
+  return (
+    <div style={{overflowY:"auto",overflowX:"hidden",flex:1}}>
+      <div style={{padding:"14px 14px 6px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+            <IconCalendar size={11} color="#f59e0b"/>
+            <span style={{fontSize:11,color:"#64748b"}}>{getFormattedDate()}</span>
+            <span className="pulse-dot" style={{width:6,height:6,background:"#10b981",borderRadius:"50%",display:"inline-block"}}/>
+          </div>
+          <h1 style={{fontSize:19,fontWeight:800,color:"#0f172a",letterSpacing:"-0.5px"}}>오늘의 투어 일정</h1>
+        </div>
+        <button onClick={()=>window.print()} className="no-print" style={{display:"flex",alignItems:"center",gap:5,padding:"7px 11px",background:"rgba(245,158,11,.08)",border:"1px solid rgba(245,158,11,.25)",color:"#d97706",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",minHeight:36}}>
+          <IconPrinter size={13}/>출력
+        </button>
+      </div>
+      <div style={{padding:"4px 14px 8px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+        <div style={{fontSize:12,color:"#64748b",flexShrink:0}}>
+          총 <strong style={{color:"#1e293b"}}>{visits.length}</strong>건
+          {selectedIds.size>0&&<span style={{color:"#2563eb",marginLeft:6,fontWeight:700}}>· {selectedIds.size}건 선택</span>}
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          {visits.length>0&&(
+            <button onClick={allSel?onDeselectAll:onSelectAll} style={{padding:"5px 10px",background:allSel?"rgba(37,99,235,.08)":"#fff",border:`1px solid ${allSel?"rgba(37,99,235,.3)":"#e2e8f0"}`,color:allSel?"#2563eb":"#64748b",borderRadius:7,fontSize:11,fontWeight:600,cursor:"pointer",minHeight:30}}>
+              {allSel?"✓ 전체해제":"전체선택"}
+            </button>
+          )}
+          <button onClick={onSortToggle} style={{display:"flex",alignItems:"center",gap:4,padding:"5px 10px",background:"#fff",border:"1px solid #e2e8f0",color:"#64748b",borderRadius:7,fontSize:11,fontWeight:500,cursor:"pointer",minHeight:30}}>
+            <IconArrowUpDown size={11}/>{sortMode==="timeAsc"?"시간순":sortMode==="timeDesc"?"역순":"방문가능순"}
+          </button>
+        </div>
+      </div>
+      <div style={{padding:"0 11px 130px"}}>
+        {visits.length===0?(
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"56px 24px",background:"#fff",border:"1px dashed #e2e8f0",borderRadius:16,textAlign:"center"}}>
+            <IconCalendar size={40} color="#e2e8f0"/>
+            <p style={{marginTop:12,fontSize:14,color:"#94a3b8",fontWeight:500}}>아직 등록된 방문 일정이 없습니다</p>
+            <p style={{marginTop:5,fontSize:12,color:"#cbd5e1"}}>하단 + 버튼을 눌러 매물을 추가해 주세요</p>
+          </div>
+        ):(
+          visits.map((v,i)=>(
+            <PropertyCard key={v.id} visit={v} index={i} onDelete={onDelete} onEdit={onEdit} isSelected={selectedIds.has(v.id)} onToggleSelect={onToggleSelect}/>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   SMS COMPOSE PAGE
+══════════════════════════════════════════════════ */
+function SmsComposePage({ visits, selectedIds, onToggleSelect, businessCard, onGoToList }) {
+  const [includeCard,   setIncludeCard]   = useState(false);
+  const [customerPhone, setCustomerPhone] = useState("");
+  const selectedVisits = visits.filter(v=>selectedIds.has(v.id));
+  const smsMsg = buildSmsMessage(selectedVisits, businessCard, includeCard);
+  const cardFilled = businessCard&&(businessCard.officeName||businessCard.phone||businessCard.address);
+
+  function handleSend() {
+    const phone = customerPhone.replace(/[^0-9+]/g,"");
+    window.location.href = phone ? `sms:${phone}?body=${encodeURIComponent(smsMsg)}` : `sms:?body=${encodeURIComponent(smsMsg)}`;
+  }
+
+  return (
+    <div style={{overflowY:"auto",overflowX:"hidden",flex:1}}>
+      <div style={{padding:"14px 14px 6px"}}>
+        <h2 style={{fontSize:19,fontWeight:800,color:"#0f172a",letterSpacing:"-0.5px"}}>안내 문자 전송</h2>
+        <p style={{fontSize:12,color:"#94a3b8",marginTop:3}}>매물을 선택하고 고객에게 안내 문자를 보내세요</p>
+      </div>
+      {selectedVisits.length===0?(
+        <div style={{margin:"12px 14px",display:"flex",flexDirection:"column",alignItems:"center",padding:"48px 24px",background:"#fff",borderRadius:16,textAlign:"center",boxShadow:"0 2px 14px rgba(0,0,0,.06)"}}>
+          <IconMessage size={44} color="#e2e8f0"/>
+          <p style={{marginTop:14,fontSize:15,color:"#64748b",fontWeight:700}}>선택된 매물이 없습니다</p>
+          <p style={{marginTop:5,fontSize:13,color:"#94a3b8"}}>전체 매물 탭에서 매물 카드의<br/>체크박스를 눌러 선택해 주세요</p>
+          <button onClick={onGoToList} style={{marginTop:18,padding:"10px 22px",background:"linear-gradient(135deg,#f59e0b,#d97706)",color:"white",border:"none",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+            → 매물 목록으로 이동
+          </button>
+        </div>
+      ):(
+        <div style={{padding:"6px 14px 130px",display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{background:"#fff",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 14px rgba(0,0,0,.05)"}}>
+            <div style={{padding:"11px 14px",borderBottom:"1px solid #f1f5f9",background:"#f8fafc"}}>
+              <span style={{fontSize:12,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px"}}>선택된 매물 ({selectedVisits.length}건)</span>
+            </div>
+            {selectedVisits.map(v=>(
+              <div key={v.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderBottom:"1px solid #f8fafc"}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:700,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.apartmentName}</div>
+                  <div style={{fontSize:12,color:"#2563eb",marginTop:1}}>{getPriceText(v)}</div>
+                </div>
+                <button onClick={()=>onToggleSelect(v.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#94a3b8",padding:6,minWidth:28,minHeight:28,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <IconX size={14}/>
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div style={{background:"#fff",borderRadius:14,padding:"14px",boxShadow:"0 2px 14px rgba(0,0,0,.05)"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:700,color:"#0f172a"}}>명함 정보 포함</div>
+                <div style={{fontSize:12,color:"#94a3b8",marginTop:2,lineHeight:1.4}}>
+                  {cardFilled?"부동산 정보를 메시지 하단에 추가합니다":"설정 탭에서 명함 정보를 먼저 입력해 주세요"}
+                </div>
+              </div>
+              <div onClick={()=>setIncludeCard(p=>!p)} style={{width:48,height:26,background:includeCard?"#2563eb":"#e2e8f0",borderRadius:13,position:"relative",cursor:"pointer",transition:"background .2s",flexShrink:0}}>
+                <div style={{position:"absolute",top:3,left:includeCard?25:3,width:20,height:20,background:"#fff",borderRadius:"50%",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
+              </div>
+            </div>
+            {includeCard&&cardFilled&&(
+              <div style={{marginTop:12,padding:"10px 12px",background:"#f8fafc",borderRadius:9,fontSize:12,color:"#64748b",lineHeight:2}}>
+                {businessCard.officeName &&<div>🏢 {businessCard.officeName}</div>}
+                {businessCard.managerName&&<div>👤 {businessCard.managerName} 소장</div>}
+                {businessCard.phone      &&<div>📞 {businessCard.phone}</div>}
+                {businessCard.address    &&<div>📍 {businessCard.address}</div>}
+                {businessCard.blog       &&<div>🔗 {businessCard.blog}</div>}
+              </div>
+            )}
+          </div>
+
+          <div style={{background:"#fff",borderRadius:14,padding:"14px",boxShadow:"0 2px 14px rgba(0,0,0,.05)"}}>
+            <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.5px"}}>메시지 미리보기</div>
+            <div style={{background:"#f1f5f9",borderRadius:12,padding:"12px 13px",fontSize:12.5,color:"#374151",lineHeight:1.8,whiteSpace:"pre-wrap",wordBreak:"break-word",maxHeight:220,overflowY:"auto",fontFamily:"monospace"}}>
+              {smsMsg}
+            </div>
+          </div>
+
+          <div style={{background:"#fff",borderRadius:14,padding:"14px",boxShadow:"0 2px 14px rgba(0,0,0,.05)"}}>
+            <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.5px"}}>받는 분 연락처 (선택)</div>
+            <input type="tel" value={customerPhone} onChange={e=>setCustomerPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" inputMode="numeric"
+              style={{width:"100%",background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"12px 14px",fontSize:15,fontWeight:500,outline:"none",letterSpacing:"1px"}}/>
+            <div style={{fontSize:11,color:"#94a3b8",marginTop:6}}>입력하면 해당 번호로 문자 앱이 바로 열립니다</div>
+          </div>
+
+          <button onClick={handleSend} style={{width:"100%",padding:"16px",background:"linear-gradient(135deg,#2563eb,#1d4ed8)",color:"white",border:"none",borderRadius:14,fontSize:16,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 6px 24px rgba(37,99,235,.4)",minHeight:54}}>
+            <IconMessage size={18} color="white"/>문자 앱으로 전송하기
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   SETTINGS PAGE
+══════════════════════════════════════════════════ */
+function SettingsPage({ licenseInfo, onLogout, businessCard, onCardChange }) {
+  const [form,  setForm]  = useState({...businessCard});
+  const [saved, setSaved] = useState(false);
+
+  function handleSave() {
+    localStorage.setItem("imjang_pro_card", JSON.stringify(form));
+    onCardChange(form); setSaved(true); setTimeout(()=>setSaved(false),2000);
+  }
+  const fields = [
+    {key:"officeName",label:"부동산 이름",ph:"예) 강남 임장부동산"},
+    {key:"managerName",label:"소장님 성함",ph:"예) 홍길동"},
+    {key:"phone",label:"연락처",ph:"010-0000-0000"},
+    {key:"address",label:"주소",ph:"예) 서울 강남구 테헤란로 123"},
+    {key:"blog",label:"블로그/SNS",ph:"sojangnote.com"},
+  ];
+  return (
+    <div style={{overflowY:"auto",overflowX:"hidden",flex:1,padding:"14px 14px 100px"}}>
+      <div style={{marginBottom:14}}>
+        <h2 style={{fontSize:19,fontWeight:800,color:"#0f172a",letterSpacing:"-0.5px"}}>설정</h2>
+        <p style={{fontSize:12,color:"#94a3b8",marginTop:3}}>명함 정보와 라이선스를 관리합니다</p>
+      </div>
+
+      <div style={{background:"#fff",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 14px rgba(0,0,0,.05)",marginBottom:14}}>
+        <div style={{padding:"12px 14px",borderBottom:"1px solid #f1f5f9",background:"#f8fafc"}}>
+          <div style={{fontWeight:700,fontSize:14,color:"#0f172a"}}>🏢 부동산 명함 정보</div>
+          <div style={{fontSize:12,color:"#94a3b8",marginTop:1}}>문자 전송 시 메시지 하단에 자동 추가됩니다</div>
+        </div>
+        <div style={{padding:"14px",display:"flex",flexDirection:"column",gap:11}}>
+          {fields.map(f=>(
+            <div key={f.key}>
+              <label style={FL_STYLE}>{f.label}</label>
+              <input value={form[f.key]||""}
+                onChange={e=>setForm(p=>({...p,[f.key]:f.key==="phone"?formatPhone(e.target.value):e.target.value}))}
+                placeholder={f.ph} type={f.key==="phone"?"tel":"text"} inputMode={f.key==="phone"?"numeric":undefined}
+                style={{width:"100%",background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:9,padding:"10px 12px",fontSize:13,outline:"none"}}/>
+            </div>
+          ))}
+          <button onClick={handleSave} style={{padding:"12px",background:saved?"#059669":"linear-gradient(135deg,#f59e0b,#d97706)",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",transition:"background .2s",minHeight:44}}>
+            {saved?"✓ 저장 완료!":"명함 정보 저장"}
+          </button>
+        </div>
+      </div>
+
+      {licenseInfo&&(
+        <div style={{background:"#fff",borderRadius:14,padding:"14px",boxShadow:"0 2px 14px rgba(0,0,0,.05)",marginBottom:14}}>
+          <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:10}}>🔑 라이선스 정보</div>
+          <div style={{fontSize:13,color:"#475569",lineHeight:2.2}}>
+            <div>만료일: <strong>{licenseInfo.expiryDate.replace(/-/g,".")}</strong></div>
+            <div>남은 기간: <strong style={{color:licenseInfo.daysLeft<=30?"#dc2626":"#059669"}}>{licenseInfo.daysLeft}일</strong></div>
+          </div>
+          <button onClick={onLogout} style={{marginTop:10,padding:"9px 14px",background:"rgba(239,68,68,.07)",border:"1px solid rgba(239,68,68,.22)",color:"#dc2626",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",minHeight:36}}>
+            라이선스 해제
+          </button>
+        </div>
+      )}
+
+      <div style={{background:"#fff",borderRadius:14,padding:"16px",boxShadow:"0 2px 14px rgba(0,0,0,.05)",textAlign:"center"}}>
+        <p style={{fontSize:12,color:"#94a3b8",lineHeight:2}}>
+          본 프로그램 이용 시{" "}
+          <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" style={{color:"#2563eb",fontWeight:700,textDecoration:"none"}}>[이용약관]</a>
+          에 동의한 것으로 간주합니다.
+        </p>
+        <p style={{fontSize:11,color:"#cbd5e1",marginTop:8}}>임장메이트 PRO v1.0 · Copyright 2026. 임장메이트.</p>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   BOTTOM NAV
+══════════════════════════════════════════════════ */
+function BottomNav({ currentTab, onTabChange, selectedCount }) {
+  const tabs = [
+    { id:"list",     Icon:IconHome,     label:"전체 매물" },
+    { id:"sms",      Icon:IconMessage,  label:"문자 전송", badge:selectedCount },
+    { id:"settings", Icon:IconSettings, label:"설정" },
+  ];
+  return (
+    <nav style={{background:"#fff",borderTop:"1px solid #e2e8f0",display:"flex",flexShrink:0,paddingBottom:"env(safe-area-inset-bottom)",boxShadow:"0 -4px 20px rgba(0,0,0,.07)"}}>
+      {tabs.map(({id,Icon,label,badge})=>{
+        const active = currentTab===id;
+        return (
+          <button key={id} onClick={()=>onTabChange(id)} style={{flex:1,padding:"10px 8px 8px",background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,cursor:"pointer",color:active?"#f59e0b":"#94a3b8",transition:"color .15s",position:"relative",minHeight:58}}>
+            {badge>0&&<span style={{position:"absolute",top:6,right:"22%",background:"#2563eb",color:"white",fontSize:9,fontWeight:700,width:16,height:16,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center"}}>{badge}</span>}
+            {active&&<div style={{position:"absolute",top:0,left:"15%",right:"15%",height:2.5,background:"#f59e0b",borderRadius:"0 0 3px 3px"}}/>}
+            <Icon size={22} color={active?"#f59e0b":"#94a3b8"}/>
+            <span style={{fontSize:10,fontWeight:active?700:500}}>{label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   MAIN APP
+══════════════════════════════════════════════════ */
+function MainApp({ licenseInfo, onLogout }) {
+  const [visits,        setVisits]       = useState(INITIAL_VISITS);
+  const [selectedIds,   setSelectedIds]  = useState(new Set());
+  const [sortMode,      setSortMode]     = useState("timeAsc");
+  const [currentTab,    setCurrentTab]   = useState("list");
+  const [showModal,     setShowModal]    = useState(false);
+  const [editingVisit,  setEditingVisit] = useState(null);
+  const [businessCard,  setBusinessCard] = useState(()=>loadBusinessCard());
+
+  function openAddModal()  { setEditingVisit(null); setShowModal(true); }
+  function openEditModal(v){ setEditingVisit(v);    setShowModal(true); }
+  function closeModal()    { setShowModal(false);   setEditingVisit(null); }
+
+  function handleSave(data) {
+    if (editingVisit) {
+      setVisits(p => p.map(v => v.id === data.id ? data : v));
+    } else {
+      setVisits(p => [...p, data]);
+    }
+    closeModal();
+  }
+  function deleteVisit(id){
+    setVisits(p=>p.filter(v=>v.id!==id));
+    setSelectedIds(prev=>{ const n=new Set(prev); n.delete(id); return n; });
+  }
+  function toggleSelect(id){
+    setSelectedIds(prev=>{ const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n; });
+  }
+  function toggleSort(){
+    setSortMode(m=>m==="timeAsc"?"timeDesc":m==="timeDesc"?"available":"timeAsc");
+  }
+
+  /* ★ useMemo: 정렬 결과 메모이제이션 */
+  const sortedVisits = useMemo(() => [...visits].sort((a,b)=>{
+    if (sortMode==="available"){
+      const aA=a.appointmentStatus==="가능"?0:1, bA=b.appointmentStatus==="가능"?0:1;
+      if (aA!==bA) return aA-bA;
+    }
+    if (!a.visitTime) return 1;
+    if (!b.visitTime) return -1;
+    return sortMode==="timeDesc"?b.visitTime.localeCompare(a.visitTime):a.visitTime.localeCompare(b.visitTime);
+  }), [visits, sortMode]);
+
+  return (
+    <div className="app-root" style={{maxWidth:560,margin:"0 auto",height:"100vh",display:"flex",flexDirection:"column",background:"#f1f5f9",position:"relative",overflow:"hidden"}}>
+      <Header licenseInfo={licenseInfo}/>
+
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        {currentTab==="list"     && <ListView visits={sortedVisits} selectedIds={selectedIds} onDelete={deleteVisit} onEdit={openEditModal} onToggleSelect={toggleSelect} sortMode={sortMode} onSortToggle={toggleSort} onSelectAll={()=>setSelectedIds(new Set(visits.map(v=>v.id)))} onDeselectAll={()=>setSelectedIds(new Set())}/>}
+        {currentTab==="sms"      && <SmsComposePage visits={visits} selectedIds={selectedIds} onToggleSelect={toggleSelect} businessCard={businessCard} onGoToList={()=>setCurrentTab("list")}/>}
+        {currentTab==="settings" && <SettingsPage licenseInfo={licenseInfo} onLogout={onLogout} businessCard={businessCard} onCardChange={setBusinessCard}/>}
+      </div>
+
+      <BottomNav currentTab={currentTab} onTabChange={setCurrentTab} selectedCount={selectedIds.size}/>
+
+      {currentTab==="list" && (
+        <button className="no-print" onClick={openAddModal} style={{position:"absolute",right:18,bottom:74,width:54,height:54,background:"linear-gradient(135deg,#f59e0b,#d97706)",border:"none",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 6px 24px rgba(245,158,11,.55)",cursor:"pointer",zIndex:90}}>
+          <IconPlus size={26} color="white"/>
+        </button>
+      )}
+
+      {showModal && (
+        <PropertyModal
+          initialData={editingVisit}
+          onSave={handleSave}
+          onClose={closeModal}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   APP (최상위)
+══════════════════════════════════════════════════ */
+function App() {
+  const [licenseInfo, setLicenseInfo] = useState(null);
+  const [ready,       setReady]       = useState(false);
+  useEffect(()=>{
+    const saved = localStorage.getItem("imjang_pro_serial");
+    if (saved){ const r=validateSerial(saved); if(r.valid&&!r.expired){ setLicenseInfo({serial:saved,expiryDate:r.expiryDate,daysLeft:r.daysLeft}); } else { localStorage.removeItem("imjang_pro_serial"); } }
+    setReady(true);
+  },[]);
+  function handleActivate(info){ setLicenseInfo(info); }
+  function handleLogout(){
+    if(confirm("라이선스를 해제하면 시리얼 번호를 다시 입력해야 합니다.\n계속하시겠습니까?")){ localStorage.removeItem("imjang_pro_serial"); setLicenseInfo(null); }
+  }
+  if (!ready) return null;
+  if (!licenseInfo) return <LicenseGate onActivate={handleActivate}/>;
+  return <MainApp licenseInfo={licenseInfo} onLogout={handleLogout}/>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('./sw.js')
+        .then(r=>console.log('[임장PRO] SW 등록:', r.scope))
+        .catch(e=>console.warn('[임장PRO] SW 실패(로컬 파일 정상):', e));
+    });
+  }
+</script>
+</body>
+</html>

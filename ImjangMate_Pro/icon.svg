@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 앱 배경 (둥근 모서리) -->
+  <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
+
+  <!-- 건물 지붕 (삼각형) -->
+  <polygon points="256,80 68,258 444,258" fill="white"/>
+
+  <!-- 건물 본체 -->
+  <rect x="98" y="246" width="316" height="210" rx="0" fill="white"/>
+
+  <!-- 왼쪽 창문 -->
+  <rect x="140" y="286" width="90" height="82" rx="10" fill="#f59e0b"/>
+
+  <!-- 오른쪽 창문 -->
+  <rect x="282" y="286" width="90" height="82" rx="10" fill="#f59e0b"/>
+
+  <!-- 현관문 -->
+  <rect x="210" y="310" width="92" height="146" rx="12" fill="#d97706"/>
+
+  <!-- 문 손잡이 -->
+  <circle cx="289" cy="390" r="8" fill="white" opacity="0.8"/>
+
+  <!-- 지붕 꼭대기 장식선 -->
+  <rect x="236" y="72" width="40" height="24" rx="6" fill="white" opacity="0.6"/>
+</svg>

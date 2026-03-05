@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 배경 -->
+  <rect width="512" height="512" rx="96" fill="#050d1f"/>
+  <!-- 앰버 그라디언트 링 -->
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#f59e0b" stroke-width="12" opacity="0.3"/>
+  <!-- 건물/태블릿 아이콘 (흰색) -->
+  <rect x="156" y="106" width="200" height="260" rx="24" fill="#2563eb"/>
+  <rect x="172" y="122" width="168" height="228" rx="16" fill="#050d1f"/>
+  <!-- 화면 내용 라인들 -->
+  <rect x="196" y="158" width="120" height="12" rx="6" fill="#3b82f6"/>
+  <rect x="196" y="182" width="88" height="8" rx="4" fill="#1e3a5f"/>
+  <rect x="196" y="210" width="120" height="36" rx="8" fill="#1e3a5f"/>
+  <rect x="204" y="218" width="6" height="20" rx="3" fill="#3b82f6"/>
+  <rect x="218" y="222" width="60" height="8" rx="4" fill="#3b82f6" opacity="0.6"/>
+  <rect x="196" y="256" width="120" height="36" rx="8" fill="#1e3a5f"/>
+  <rect x="204" y="264" width="6" height="20" rx="3" fill="#f59e0b"/>
+  <rect x="218" y="268" width="60" height="8" rx="4" fill="#f59e0b" opacity="0.6"/>
+  <rect x="196" y="302" width="120" height="36" rx="8" fill="#1e3a5f"/>
+  <rect x="204" y="310" width="6" height="20" rx="3" fill="#10b981"/>
+  <rect x="218" y="314" width="60" height="8" rx="4" fill="#10b981" opacity="0.6"/>
+  <!-- 하단 홈 버튼 영역 -->
+  <rect x="228" y="354" width="56" height="8" rx="4" fill="#1e3a5f"/>
+  <!-- 앰버 포인트 (우상단 뱃지) -->
+  <circle cx="356" cy="156" r="32" fill="#f59e0b"/>
+  <text x="356" y="165" font-family="Arial" font-size="28" font-weight="bold" fill="#050d1f" text-anchor="middle">P</text>
+  <!-- 하단 텍스트 -->
+  <text x="256" y="430" font-family="Arial" font-size="32" font-weight="bold" fill="#f59e0b" text-anchor="middle">임장메이트</text>
+  <text x="256" y="468" font-family="Arial" font-size="24" fill="#3b82f6" text-anchor="middle">PRO</text>
+</svg>

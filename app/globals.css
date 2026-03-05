@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Black+Han+Sans&display=swap');
+
+:root {
+  --font-noto: 'Noto Sans KR', system-ui, sans-serif;
+  --font-bhs:  'Black Han Sans', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font-noto);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #cbd5e1; border-radius: 10px; }
+
+@media print {
+  body { background: #fff; color: #000; }
+  .no-print { display: none !important; }
+}
+
+@keyframes point-left {
+  0%, 100% { transform: translateX(0px); }
+  50%       { transform: translateX(-7px); }
+}
+.animate-point-left {
+  display: inline-block;
+  animation: point-left 0.7s ease-in-out infinite;
+}
