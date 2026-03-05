@@ -1,9 +1,9 @@
 import {
-  doc, getDoc, setDoc, updateDoc, deleteDoc,
+  doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
   collection, onSnapshot, addDoc,
   query, orderBy, Unsubscribe,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, FIREBASE_APP_ID } from './firebase';
 import { AppUser, ApplicationForm, ApplicationStatus, Archive, BusinessCard, DeviceInfo, Visit } from '@/types';
 
 /* ── 사용자 ─────────────────────────────────── */
@@ -37,29 +37,22 @@ export async function approveOneYear(uid: string): Promise<void> {
   });
 }
 
+/* 기기 저장 경로: /artifacts/${appId}/users/${uid}/devices/${deviceId} */
+function devicesCol(uid: string) {
+  return collection(db, 'artifacts', FIREBASE_APP_ID, 'users', uid, 'devices');
+}
+
+export async function getDevices(uid: string): Promise<DeviceInfo[]> {
+  const snap = await getDocs(devicesCol(uid));
+  return snap.docs.map(d => d.data() as DeviceInfo);
+}
+
 export async function registerDevice(uid: string, device: DeviceInfo): Promise<void> {
-  const userRef = doc(db, 'users', uid);
-  const snap    = await getDoc(userRef);
-  if (!snap.exists()) return;
-  const data    = snap.data() as AppUser;
-  const devices = data.devices || [];
-  const existing = devices.findIndex(d => d.deviceId === device.deviceId);
-  if (existing >= 0) {
-    devices[existing].lastLogin = Date.now();
-  } else {
-    devices.push(device);
-  }
-  await updateDoc(userRef, { devices });
+  await setDoc(doc(devicesCol(uid), device.deviceId), device);
 }
 
 export async function revokeDevice(uid: string, deviceId: string): Promise<void> {
-  const userRef = doc(db, 'users', uid);
-  const snap    = await getDoc(userRef);
-  if (!snap.exists()) return;
-  const data    = snap.data() as AppUser;
-  await updateDoc(userRef, {
-    devices: (data.devices || []).filter(d => d.deviceId !== deviceId),
-  });
+  await deleteDoc(doc(devicesCol(uid), deviceId));
 }
 
 export function subscribeAllUsers(cb: (users: AppUser[]) => void): Unsubscribe {

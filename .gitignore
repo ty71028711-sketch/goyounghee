@@ -22,3 +22,4 @@ Thumbs.db
 # 에디터
 .vscode/
 *.swp
+.env*.local

@@ -1,34 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ApplicationForm from '@/components/ApplicationForm';
 
 export default function LoginPage() {
-  const { firebaseUser, appUser, loading, deviceError, expiryError,
+  const { firebaseUser, appUser, loading, deviceError, expiryError, loginError,
           pendingNewUser, signInWithGoogle, logout, completeSignup } = useAuth();
   const router = useRouter();
 
   const [signupName,    setSignupName]    = useState('');
   const [signupPhone,   setSignupPhone]   = useState('');
   const [signupLoading, setSignupLoading] = useState(false);
-
-  const [isRedirecting, setIsRedirecting] = useState(false);
-
-  useEffect(() => {
-    if (loading) return;
-    // 로그아웃 시 리다이렉트 해제
-    if (!firebaseUser) { setIsRedirecting(false); return; }
-    if (!appUser)      return;
-    if (deviceError)   return;
-    if (expiryError)   return;
-    if (appUser.status === 'approved' && appUser.planStatus === '사용중') {
-      setIsRedirecting(true);
-      const t = setTimeout(() => router.replace('/dashboard'), 900);
-      return () => clearTimeout(t);
-    }
-  }, [loading, firebaseUser, appUser, deviceError, expiryError, router]);
 
   async function handleSignupSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -57,26 +41,6 @@ export default function LoginPage() {
           ))}
         </div>
         <p className="text-slate-500 text-sm">로그인 확인 중...</p>
-      </div>
-    );
-  }
-
-  // ── 하이패스 리다이렉트 (approved + 사용중 + 기기 통과) ──
-  if (isRedirecting) {
-    return (
-      <div className="min-h-screen bg-[#050d1f] flex flex-col items-center justify-center gap-5 animate-fade-in-up">
-        <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-amber-900/50 animate-pulse">
-          <svg className="w-8 h-8 text-slate-900" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <rect x="4" y="2" width="16" height="20" rx="2"/>
-            <path d="M9 22v-4h6v4"/>
-            <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
-          </svg>
-        </div>
-        <p className="text-white font-bold text-lg tracking-tight">임장메이트 <span className="text-amber-400">PRO</span></p>
-        <p className="text-amber-400 text-sm font-semibold">대시보드로 이동 중...</p>
-        <div className="w-48 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-blue-500 to-amber-400 rounded-full animate-progress" />
-        </div>
       </div>
     );
   }
@@ -321,9 +285,27 @@ export default function LoginPage() {
             </div>
             <span className="font-bold text-lg tracking-tight">임장메이트 <span className="text-blue-400">PRO</span></span>
           </div>
-          <span className="text-xs text-blue-300/70 border border-blue-700/50 bg-blue-900/20 rounded-full px-3 py-1">
-            공인중개사 전용
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-blue-300/70 border border-blue-700/50 bg-blue-900/20 rounded-full px-3 py-1">
+              공인중개사 전용
+            </span>
+            {!firebaseUser && (
+              <button
+                onClick={signInWithGoogle}
+                className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 active:scale-95 px-4 py-1.5 rounded-full transition-all shadow-md shadow-blue-900/50"
+              >
+                멤버 로그인
+              </button>
+            )}
+            {firebaseUser && appUser?.status === 'approved' && appUser?.planStatus === '사용중' && (
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 active:scale-95 px-4 py-1.5 rounded-full transition-all shadow-md shadow-blue-900/50"
+              >
+                대시보드
+              </button>
+            )}
+          </div>
         </header>
 
         {/* 히어로 본문 */}
@@ -350,20 +332,38 @@ export default function LoginPage() {
               계약 성사율을 높이는 소장님만의 디지털 비서
             </p>
 
-            {/* 구글 로그인 버튼 (비로그인 상태에서만 표시) */}
-            {!firebaseUser && (
+            {/* 로그인 / 대시보드 버튼 */}
+            {!firebaseUser ? (
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={signInWithGoogle}
+                  className="inline-flex items-center gap-3 bg-white hover:bg-slate-50 active:scale-[.98] text-slate-800 font-bold text-base px-7 py-4 rounded-2xl transition-all shadow-xl shadow-black/20 border border-slate-200">
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  Google 계정으로 로그인
+                </button>
+                {loginError && (
+                  <p className="text-red-400 text-[12px] text-center max-w-[280px] leading-snug bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-lg">
+                    {loginError}
+                  </p>
+                )}
+              </div>
+            ) : (appUser?.status === 'approved' && appUser?.planStatus === '사용중') ? (
               <button
-                onClick={signInWithGoogle}
-                className="inline-flex items-center gap-3 bg-white hover:bg-slate-50 active:scale-[.98] text-slate-800 font-bold text-base px-7 py-4 rounded-2xl transition-all shadow-xl shadow-black/20 border border-slate-200">
-                <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                onClick={() => router.push('/dashboard')}
+                className="inline-flex items-center gap-3 bg-blue-600 hover:bg-blue-500 active:scale-[.98] text-white font-bold text-base px-7 py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40">
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <rect x="4" y="2" width="16" height="20" rx="2"/>
+                  <path d="M9 22v-4h6v4"/>
+                  <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
                 </svg>
-                Google 계정으로 로그인
+                임장메이트 PRO 시작하기
               </button>
-            )}
+            ) : null}
 
           </div>
 
@@ -797,6 +797,9 @@ export default function LoginPage() {
           </div>
           <p className="text-slate-600 text-xs text-center sm:text-left leading-relaxed">
             사업자등록번호 224-21-62567 · 경기도 동두천시 송내동665-6 504호 · 대표: 송태영 · 상호: 임장메이트
+          </p>
+          <p className="text-slate-700 text-[10px] text-center font-mono tracking-wide">
+            [v2026-03-06 | Auth_Failsafe_Active]
           </p>
         </div>
       </footer>
