@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { Visit, EMPTY_VISIT, CAT_LABELS, DEAL_LABELS, VALID_DEALS, DEFAULT_DEAL, Category, DealType } from '@/types';
-import { formatPhone, formatMan, cn } from '@/lib/utils';
+import { formatPhone, cn } from '@/lib/utils';
 
 const CARET = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`;
 
@@ -16,19 +16,45 @@ interface Props {
   onClose: () => void;
 }
 
+/* ── 방문시간 파싱 헬퍼 ── */
+function parseVisitTime(t: string): { ampm: '오전' | '오후'; text: string } {
+  if (!t) return { ampm: '오전', text: '' };
+  if (t.startsWith('오전 ')) return { ampm: '오전', text: t.slice(3) };
+  if (t.startsWith('오후 ')) return { ampm: '오후', text: t.slice(3) };
+  // 레거시 HH:MM 포맷 변환
+  const m = /^(\d{1,2}):(\d{2})$/.exec(t);
+  if (m) {
+    const h = Number(m[1]);
+    const ap: '오전' | '오후' = h < 12 ? '오전' : '오후';
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return { ampm: ap, text: `${h12}:${m[2]}` };
+  }
+  return { ampm: '오전', text: t };
+}
+
 export default function PropertyModal({ initialData, onSave, onClose }: Props) {
   const [form, setForm] = useState<Omit<Visit, 'id' | 'createdAt' | 'updatedAt'>>(
     () => initialData ? { ...initialData } : { ...EMPTY_VISIT }
   );
   const isEdit = !!initialData;
 
+  // 방문시간 오전/오후 상태
+  const [ampm, setAmpm] = useState<'오전' | '오후'>(() => parseVisitTime(initialData?.visitTime || '').ampm);
+  const [timeText, setTimeText] = useState<string>(() => parseVisitTime(initialData?.visitTime || '').text);
+
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm(p => ({ ...p, [name]: value }));
   }, []);
 
-  function handlePhone(name: string, raw: string) {
-    setForm(p => ({ ...p, [name]: formatPhone(raw) }));
+  function handleAmpm(ap: '오전' | '오후') {
+    setAmpm(ap);
+    setForm(p => ({ ...p, visitTime: timeText ? `${ap} ${timeText}` : '' }));
+  }
+
+  function handleTimeText(t: string) {
+    setTimeText(t);
+    setForm(p => ({ ...p, visitTime: t ? `${ampm} ${t}` : '' }));
   }
 
   function changeCat(cat: Category) {
@@ -105,10 +131,19 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
         {/* 스크롤 폼 */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
 
-          {/* 매물명 */}
-          <div>
-            <label className={labelCls}>{isHouse ? '주택명 *' : '아파트명 *'}</label>
-            <input name="apartmentName" value={form.apartmentName} onChange={handleChange} className={inputCls} />
+          {/* ① 아파트명 + 약속상태 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>{isHouse ? '주택명 *' : '아파트명 *'}</label>
+              <input name="apartmentName" value={form.apartmentName} onChange={handleChange} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>약속 상태</label>
+              <select name="appointmentStatus" value={form.appointmentStatus} onChange={handleChange} className={selectCls}
+                style={{ backgroundImage: CARET, backgroundRepeat:'no-repeat', backgroundPosition:'right 10px center' }}>
+                <option>가능</option><option>확인중</option><option>방문완료</option><option>불가</option>
+              </select>
+            </div>
           </div>
 
           {/* 네이버 부동산 URL */}
@@ -155,7 +190,7 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
             </div>
           )}
 
-          {/* 동 / 호수 (전 카테고리) */}
+          {/* 동 / 호수 */}
           <div className="grid grid-cols-2 gap-3">
             <div><label className={labelCls}>동</label><input name="dong" value={form.dong} onChange={handleChange} className={inputCls} /></div>
             <div><label className={labelCls}>호수</label><input name="ho" value={form.ho} onChange={handleChange} className={inputCls} /></div>
@@ -190,7 +225,6 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
 
           {(form.dealType === 'rental' || form.dealType === 'saleRightRental') && (
             <>
-              {/* 전세/월세 토글 */}
               <div>
                 <label className={labelCls}>전세 / 월세</label>
                 <div className="flex bg-slate-100 rounded-xl p-1 gap-1">
@@ -244,72 +278,88 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
             </div>
           )}
 
-          {/* 입주 가능일 */}
-          <div>
-            <label className={labelCls}>입주 가능일</label>
-            <div className="grid grid-cols-[1fr_auto] gap-3 items-center">
+          {/* ③ 입주 가능일 + 방문 시간 (같은 줄) */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* 입주 가능일 */}
+            <div>
+              <label className={labelCls}>입주 가능일</label>
               <input type="date" name="moveInDate"
                 value={dateDisabled ? '' : form.moveInDate}
                 disabled={dateDisabled}
                 onChange={handleChange}
                 className={cn(inputCls, dateDisabled && 'opacity-40 cursor-not-allowed')} />
-              <div className="flex flex-col gap-2">
-                <label className="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-                  <CheckBox color="green" checked={form.immediateMove} onChange={() => setForm(p => ({ ...p, immediateMove: !p.immediateMove, negotiateMove: false, moveInDate: '' }))} />
-                  <span className={cn('text-[13px] font-semibold', form.immediateMove ? 'text-emerald-600' : 'text-slate-500')}>즉시입주</span>
+              <div className="flex gap-2 mt-1.5">
+                <label className="flex items-center gap-1 cursor-pointer">
+                  <CheckBox color="green" checked={form.immediateMove}
+                    onChange={() => setForm(p => ({ ...p, immediateMove: !p.immediateMove, negotiateMove: false, moveInDate: '' }))} size="sm" />
+                  <span className={cn('text-[11px] font-semibold whitespace-nowrap', form.immediateMove ? 'text-emerald-600' : 'text-slate-400')}>즉시입주</span>
                 </label>
-                <label className="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-                  <CheckBox color="amber" checked={form.negotiateMove} onChange={() => setForm(p => ({ ...p, negotiateMove: !p.negotiateMove, immediateMove: false, moveInDate: '' }))} />
-                  <span className={cn('text-[13px] font-semibold', form.negotiateMove ? 'text-amber-600' : 'text-slate-500')}>입주협의</span>
+                <label className="flex items-center gap-1 cursor-pointer">
+                  <CheckBox color="amber" checked={form.negotiateMove}
+                    onChange={() => setForm(p => ({ ...p, negotiateMove: !p.negotiateMove, immediateMove: false, moveInDate: '' }))} size="sm" />
+                  <span className={cn('text-[11px] font-semibold whitespace-nowrap', form.negotiateMove ? 'text-amber-600' : 'text-slate-400')}>입주협의</span>
                 </label>
               </div>
             </div>
-          </div>
 
-          {/* 공동중개사 */}
-          <div>
-            <label className={labelCls}>공동중개사</label>
-            <input name="coBrokerAgency" value={form.coBrokerAgency} onChange={handleChange} className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>공동중개사 연락처</label>
-            <PhoneField value={form.coBrokerPhone} onChange={v => setForm(p => ({ ...p, coBrokerPhone: v }))} />
-          </div>
-
-          {/* 반려동물 + 약속상태 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>반려동물</label>
-              <select name="hasPet" value={form.hasPet} onChange={handleChange} className={selectCls}
-                style={{ backgroundImage: CARET, backgroundRepeat:'no-repeat', backgroundPosition:'right 10px center' }}>
-                <option>가능</option><option>불가능</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>약속 상태</label>
-              <select name="appointmentStatus" value={form.appointmentStatus} onChange={handleChange} className={selectCls}
-                style={{ backgroundImage: CARET, backgroundRepeat:'no-repeat', backgroundPosition:'right 10px center' }}>
-                <option>가능</option><option>확인중</option><option>방문완료</option><option>불가</option>
-              </select>
-            </div>
-          </div>
-
-          {/* 방문 연락처 + 방문 시간 + 공실 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>방문 연락처</label>
-              <PhoneField value={form.visitPhone} onChange={v => setForm(p => ({ ...p, visitPhone: v }))} />
-            </div>
+            {/* 방문 시간 (오전/오후 + 자유 입력) */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className={labelCls} style={{marginBottom:0}}>방문 시간</label>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <CheckBox color="green" checked={form.isVacant} onChange={() => setForm(p => ({ ...p, isVacant: !p.isVacant }))} size="sm" />
-                  <span className={cn('text-[12px] font-bold whitespace-nowrap', form.isVacant ? 'text-emerald-600' : 'text-slate-400')}>공실</span>
+                <label className="flex items-center gap-1 cursor-pointer">
+                  <CheckBox color="green" checked={form.isVacant}
+                    onChange={() => setForm(p => ({ ...p, isVacant: !p.isVacant }))} size="sm" />
+                  <span className={cn('text-[11px] font-bold whitespace-nowrap', form.isVacant ? 'text-emerald-600' : 'text-slate-400')}>공실</span>
                 </label>
               </div>
-              <input type="time" name="visitTime" value={form.visitTime} onChange={handleChange} className={inputCls} />
+              <div className="flex gap-1.5 mb-1.5">
+                <button type="button" onClick={() => handleAmpm('오전')}
+                  className={cn('flex-1 py-2 text-[12px] font-bold rounded-xl border transition-all',
+                    ampm === '오전' ? 'bg-brand-500 text-white border-brand-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300')}>
+                  오전
+                </button>
+                <button type="button" onClick={() => handleAmpm('오후')}
+                  className={cn('flex-1 py-2 text-[12px] font-bold rounded-xl border transition-all',
+                    ampm === '오후' ? 'bg-brand-500 text-white border-brand-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300')}>
+                  오후
+                </button>
+              </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={timeText}
+                onChange={e => handleTimeText(e.target.value)}
+                placeholder="예) 10:00"
+                className={inputCls}
+              />
             </div>
+          </div>
+
+          {/* ② 공동중개부동산 + 전화번호 (같은 줄) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>공동중개부동산</label>
+              <input name="coBrokerAgency" value={form.coBrokerAgency} onChange={handleChange} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>공동중개부동산 전화번호</label>
+              <PhoneField value={form.coBrokerPhone} onChange={v => setForm(p => ({ ...p, coBrokerPhone: v }))} />
+            </div>
+          </div>
+
+          {/* 반려동물 */}
+          <div>
+            <label className={labelCls}>반려동물</label>
+            <select name="hasPet" value={form.hasPet} onChange={handleChange} className={selectCls}
+              style={{ backgroundImage: CARET, backgroundRepeat:'no-repeat', backgroundPosition:'right 10px center' }}>
+              <option>가능</option><option>불가능</option>
+            </select>
+          </div>
+
+          {/* 방문 연락처 */}
+          <div>
+            <label className={labelCls}>방문 연락처</label>
+            <PhoneField value={form.visitPhone} onChange={v => setForm(p => ({ ...p, visitPhone: v }))} />
           </div>
 
           {/* 메모 */}
