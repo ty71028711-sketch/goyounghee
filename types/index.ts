@@ -82,6 +82,7 @@ export interface ApplicationForm {
   id:            string;
   name:          string;
   phone:         string;
+  officeName?:   string;
   depositorName: string;
   googleEmail:   string;
   receiptType:   ReceiptType;

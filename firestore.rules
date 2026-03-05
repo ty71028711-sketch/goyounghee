@@ -78,11 +78,11 @@ service cloud.firestore {
 
     // ────────────────────────────────────────────────────────────
     // applications 컬렉션 (서비스 신청서)
-    //   - 로그인한 사용자: 생성만 가능
+    //   - 누구나(비로그인 포함): 생성만 가능 (랜딩 페이지 신청 폼)
     //   - 관리자: 읽기·수정·삭제 가능
     // ────────────────────────────────────────────────────────────
     match /applications/{docId} {
-      allow create: if request.auth != null;
+      allow create: if true;
       allow read, update, delete: if isAdmin();
     }
 
