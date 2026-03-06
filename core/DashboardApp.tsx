@@ -7,10 +7,10 @@ import { useArchives } from './hooks/useArchives';
 import { useBusinessCard } from './hooks/useBusinessCard';
 import PropertyCard from './PropertyCard';
 import PropertyModal from './PropertyModal';
-import SmsComposePage from './SmsComposePage';
+import SmsComposePage from '@/modules/sms/SmsComposePage';
 import SettingsPage from './SettingsPage';
 import ArchivesPage from './ArchivesPage';
-import IjangMapPage from './IjangMapPage';
+import IjangMapPage from '@/modules/map/IjangMapPage';
 import { Visit } from '@/types';
 import { getFormattedDate, cn } from '@/lib/utils';
 
