@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/auth/AuthContext';
 import {
-  subscribeAllUsers, updateUserStatus, revokeDevice,
-  approveOneYear, subscribeApplications, updateApplicationStatus,
-} from '@/lib/firestore';
+  subscribeAllUsers, updateUserStatus, revokeDevice, approveOneYear,
+} from '@/auth/userStore';
+import { subscribeApplications, updateApplicationStatus } from '@/lib/firestore';
 import { AppUser, ApplicationForm, UserStatus } from '@/types';
 import { cn } from '@/lib/utils';
 

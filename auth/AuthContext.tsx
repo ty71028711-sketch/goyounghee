@@ -6,7 +6,7 @@ import { auth, googleProvider } from './firebase';
 import {
   getAppUser, createAppUser, registerDevice, getDevices,
   subscribeUserDoc, updateUserStatus,
-} from '@/lib/firestore';
+} from './userStore';
 import { getDeviceId, getDeviceType, getDeviceName } from './deviceFingerprint';
 import { AppUser } from '@/types';
 

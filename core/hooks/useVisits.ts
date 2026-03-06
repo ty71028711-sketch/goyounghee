@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { subscribeVisits, addVisit, updateVisit, deleteVisit } from '@/lib/firestore';
+import { subscribeVisits, addVisit, updateVisit, deleteVisit } from '@/core/services/dataStore';
 import { Visit } from '@/types';
 
 export function useVisits(uid: string | undefined) {

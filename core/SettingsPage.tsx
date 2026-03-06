@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { useBusinessCard } from './hooks/useBusinessCard';
-import { revokeDevice } from '@/lib/firestore';
+import { revokeDevice } from '@/auth/userStore';
 import { getDeviceId } from '@/auth/deviceFingerprint';
 import { cn } from '@/lib/utils';
 

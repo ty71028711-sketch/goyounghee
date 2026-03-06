@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { getBusinessCard, saveBusinessCard } from '@/lib/firestore';
+import { getBusinessCard, saveBusinessCard } from '@/core/services/dataStore';
 import { BusinessCard } from '@/types';
 
 const DEFAULT_CARD: BusinessCard = {

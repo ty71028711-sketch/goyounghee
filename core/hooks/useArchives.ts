@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { subscribeArchives, saveArchive, deleteArchive } from '@/lib/firestore';
+import { subscribeArchives, saveArchive, deleteArchive } from '@/core/services/dataStore';
 import { Archive, Visit } from '@/types';
 
 export function useArchives(uid: string | undefined) {
