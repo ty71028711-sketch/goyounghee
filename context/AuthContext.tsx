@@ -194,8 +194,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // ── 만료 / 미활성 체크 (슈퍼어드민 제외) ──
       if (!isSuperAdmin && aUser.status === 'approved') {
-        const isExpired   = aUser.expiryDate != null && aUser.expiryDate < Date.now();
-        const isNotActive = !aUser.planStatus || aUser.planStatus !== '사용중';
+        const isExpired = aUser.expiryDate != null && aUser.expiryDate < Date.now();
+        // planStatus 필드 자체가 없는(undefined) 경우는 데이터 마이그레이션 문제이므로
+        // 명시적으로 비활성 값이 설정된 경우에만 차단 (undefined는 통과)
+        const isNotActive = aUser.planStatus != null && aUser.planStatus !== '사용중';
         if (isExpired || isNotActive) {
           setExpiryError('서비스 이용 기간이 만료되었습니다.\n연장 문의 부탁드립니다.');
           setAppUser(aUser);
@@ -227,7 +229,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!updated) return;
         if (updated.status === 'rejected') { signOut(auth); return; }
         const isExpired   = updated.expiryDate != null && updated.expiryDate < Date.now();
-        const isNotActive = !updated.planStatus || updated.planStatus !== '사용중';
+        const isNotActive = updated.planStatus != null && updated.planStatus !== '사용중';
         if (!isSuperAdmin && (isExpired || isNotActive)) {
           setExpiryError('서비스 이용 기간이 만료되었습니다.\n연장 문의 부탁드립니다.');
         }

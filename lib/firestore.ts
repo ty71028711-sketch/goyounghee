@@ -21,6 +21,7 @@ export async function updateUserStatus(uid: string, status: 'approved' | 'reject
   const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
   await updateDoc(doc(db, 'users', uid), {
     status,
+    planStatus: status === 'approved' ? '사용중' : '이용종료',
     approvedAt: status === 'approved' ? now : null,
     expiryDate: status === 'approved' ? (noExpiry ? null : now + ONE_YEAR_MS) : null,
   });
