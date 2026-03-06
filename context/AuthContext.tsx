@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithRedirect, signInWithPopup, getRedirectResult, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import {
   getAppUser, createAppUser, registerDevice, getDevices,
@@ -107,17 +107,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const userDocUnsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    // 리다이렉트 로그인 결과 에러 처리
-    getRedirectResult(auth).catch((err: unknown) => {
-      const code = (err as { code?: string }).code;
-      if (!code) return;
-      console.error('[Auth] 리다이렉트 로그인 오류:', err);
-      if (code === 'auth/unauthorized-domain') {
-        setLoginError('이 도메인에서는 로그인이 허용되지 않습니다. 관리자에게 문의하세요.');
-      } else {
-        setLoginError('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
-      }
-    });
+    // 프로덕션에서만 리다이렉트 결과 처리 (로컬은 popup 사용)
+    if (process.env.NODE_ENV !== 'development') {
+      getRedirectResult(auth).catch((err: unknown) => {
+        const code = (err as { code?: string }).code;
+        if (!code) return;
+        console.error('[Auth] 리다이렉트 로그인 오류:', err);
+        if (code === 'auth/unauthorized-domain') {
+          setLoginError('이 도메인에서는 로그인이 허용되지 않습니다. 관리자에게 문의하세요.');
+        } else {
+          setLoginError('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+        }
+      });
+    }
 
     // 6초 절대 안전 타이머 — onAuthStateChanged 자체가 응답 없을 때
     const safetyTimer = setTimeout(() => {
@@ -317,8 +319,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signInWithGoogle() {
     setLoginError(null);
     try {
-      await signInWithRedirect(auth, googleProvider);
-      // 브라우저가 Google로 리다이렉트됨 — 이하 코드 실행 안 됨
+      if (process.env.NODE_ENV === 'development') {
+        // 로컬 개발: popup 방식 (redirect는 localhost에서 third-party cookie 문제)
+        await signInWithPopup(auth, googleProvider);
+      } else {
+        // 프로덕션: redirect 방식
+        await signInWithRedirect(auth, googleProvider);
+        // 브라우저가 Google로 리다이렉트됨 — 이하 코드 실행 안 됨
+      }
     } catch (err: unknown) {
       console.error('[Auth] Google 로그인 시작 오류:', err);
       setLoginError('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
