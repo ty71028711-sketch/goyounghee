@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import { useSessionVisits } from '@/hooks/useSessionVisits';
 import { useArchives } from '@/hooks/useArchives';
 import { useBusinessCard } from '@/hooks/useBusinessCard';

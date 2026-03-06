@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import { useBusinessCard } from '@/hooks/useBusinessCard';
 import { revokeDevice } from '@/lib/firestore';
-import { getDeviceId } from '@/lib/deviceFingerprint';
+import { getDeviceId } from '@/auth/deviceFingerprint';
 import { cn } from '@/lib/utils';
 
 const TERMS_URL = 'https://sojangnote.com/terms';

@@ -2,12 +2,12 @@
 
 import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithRedirect, signInWithPopup, getRedirectResult, signOut } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { auth, googleProvider } from './firebase';
 import {
   getAppUser, createAppUser, registerDevice, getDevices,
   subscribeUserDoc, updateUserStatus,
 } from '@/lib/firestore';
-import { getDeviceId, getDeviceType, getDeviceName } from '@/lib/deviceFingerprint';
+import { getDeviceId, getDeviceType, getDeviceName } from './deviceFingerprint';
 import { AppUser } from '@/types';
 
 interface AuthContextValue {
@@ -136,12 +136,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearTimeout(safetyTimer);
       console.log(`[AUTH-04] onAuthStateChanged | uid=${user?.uid ?? 'null'} | approvedRef=${approvedRef.current}`);
 
-      // [FIX-3] flowTimer: 15s → 5s (withTimeout 최대값 5s에 맞춤, 로딩 최대 대기 단축)
+      // [FIX-4] flowTimer: 5s → 3s (safetyTimer·withTimeout·localTimeout 모두 3s로 통일)
       const flowTimer = setTimeout(() => {
-        console.log('[AUTH-05] flowTimer(5s) 초과 → loading 강제 해제');
+        console.log('[AUTH-05] flowTimer(3s) 초과 → loading 강제 해제');
         setLoading(false);
         setInitialLoading(false);
-      }, 5_000);
+      }, 3_000);
 
       userDocUnsubRef.current?.();
       userDocUnsubRef.current = null;
@@ -194,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const isSuperAdmin = superAdminEmails.includes((user.email ?? '').toLowerCase());
       console.log(`[AUTH-07] 어드민 체크 | email=${user.email} | isSuperAdmin=${isSuperAdmin}`);
 
-      let aUser = await withTimeout(getAppUser(user.uid), 5_000);
+      let aUser = await withTimeout(getAppUser(user.uid), 3_000);
       console.log(`[AUTH-08] Firestore 유저 | status=${aUser?.status} | planStatus=${aUser?.planStatus} | expiryDate=${aUser?.expiryDate}`);
 
       // ── 신규 유저 ──

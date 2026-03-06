@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider } from '@/auth/AuthContext';
 
 export const metadata: Metadata = {
   title:       '임장메이트 PRO',

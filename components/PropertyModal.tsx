@@ -38,24 +38,34 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
   );
   const isEdit = !!initialData;
 
-  // 방문시간 오전/오후 상태
-  const [ampm, setAmpm] = useState<'오전' | '오후'>(() => parseVisitTime(initialData?.visitTime || '').ampm);
-  const [timeText, setTimeText] = useState<string>(() => parseVisitTime(initialData?.visitTime || '').text);
+  // 방문시간 ↔ type="time" 변환 헬퍼
+  function toTimeInput(t: string): string {
+    const { ampm, text } = parseVisitTime(t);
+    if (!text) return '';
+    const parts = text.split(':');
+    if (parts.length !== 2) return '';
+    let h = Number(parts[0]);
+    const m = Number(parts[1]);
+    if (isNaN(h) || isNaN(m)) return '';
+    if (ampm === '오후' && h !== 12) h += 12;
+    if (ampm === '오전' && h === 12) h = 0;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+  function fromTimeInput(t: string): string {
+    if (!t) return '';
+    const [hStr, mStr] = t.split(':');
+    const h = Number(hStr);
+    const m = Number(mStr);
+    if (isNaN(h) || isNaN(m)) return '';
+    const ap = h < 12 ? '오전' : '오후';
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${ap} ${h12}:${String(m).padStart(2, '0')}`;
+  }
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm(p => ({ ...p, [name]: value }));
   }, []);
-
-  function handleAmpm(ap: '오전' | '오후') {
-    setAmpm(ap);
-    setForm(p => ({ ...p, visitTime: timeText ? `${ap} ${timeText}` : '' }));
-  }
-
-  function handleTimeText(t: string) {
-    setTimeText(t);
-    setForm(p => ({ ...p, visitTime: t ? `${ampm} ${t}` : '' }));
-  }
 
   function changeCat(cat: Category) {
     setForm(p => ({
@@ -136,6 +146,16 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
             <div>
               <label className={labelCls}>{isHouse ? '주택명 *' : '아파트명 *'}</label>
               <input name="apartmentName" value={form.apartmentName} onChange={handleChange} className={inputCls} />
+              {showOffice && (
+                <div className="flex gap-3 mt-1.5">
+                  {[['officetelResidential','주거용'],['officetelBusiness','업무용']].map(([k,l]) => (
+                    <label key={k} className="flex items-center gap-1.5 cursor-pointer">
+                      <CheckBox checked={!!form[k as keyof typeof form]} onChange={() => setForm(p => ({ ...p, [k]: !p[k as keyof typeof p] }))} size="sm" />
+                      <span className={cn('text-[11px] font-semibold', form[k as keyof typeof form] ? 'text-emerald-600' : 'text-slate-500')}>{l}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label className={labelCls}>약속 상태</label>
@@ -204,17 +224,11 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
               : <div><label className={labelCls}>타입</label><input name="type" value={form.type} onChange={handleChange} className={inputCls} /></div>}
           </div>
 
-          {/* 욕실 + 주차 (주택) */}
+          {/* 욕실 (주택) */}
           {isHouse && (
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className={labelCls}>욕실 수</label><input name="bathrooms" value={form.bathrooms} onChange={handleChange} className={inputCls} /></div>
-              <div>
-                <label className={labelCls}>주차</label>
-                <select name="parking" value={form.parking} onChange={handleChange} className={selectCls}
-                  style={{ backgroundImage: CARET, backgroundRepeat:'no-repeat', backgroundPosition:'right 10px center' }}>
-                  <option>가능</option><option>불가능</option><option>협의</option>
-                </select>
-              </div>
+            <div>
+              <label className={labelCls}>욕실 수</label>
+              <input name="bathrooms" value={form.bathrooms} onChange={handleChange} className={inputCls} />
             </div>
           )}
 
@@ -263,21 +277,6 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
             </>
           )}
 
-          {/* 오피스텔 */}
-          {showOffice && (
-            <div>
-              <label className={labelCls}>오피스텔 종류 (해당 시)</label>
-              <div className="flex gap-4 py-1">
-                {[['officetelResidential','주거용'],['officetelBusiness','업무용']].map(([k,l]) => (
-                  <label key={k} className="flex items-center gap-2 cursor-pointer">
-                    <CheckBox checked={!!form[k as keyof typeof form]} onChange={() => setForm(p => ({ ...p, [k]: !p[k as keyof typeof p] }))} />
-                    <span className={cn('text-sm font-semibold', form[k as keyof typeof form] ? 'text-emerald-600' : 'text-slate-500')}>{l}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* ③ 입주 가능일 + 방문 시간 (같은 줄) */}
           <div className="grid grid-cols-2 gap-3">
             {/* 입주 가능일 */}
@@ -299,37 +298,21 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
                     onChange={() => setForm(p => ({ ...p, negotiateMove: !p.negotiateMove, immediateMove: false, moveInDate: '' }))} size="sm" />
                   <span className={cn('text-[11px] font-semibold whitespace-nowrap', form.negotiateMove ? 'text-amber-600' : 'text-slate-400')}>입주협의</span>
                 </label>
-              </div>
-            </div>
-
-            {/* 방문 시간 (오전/오후 + 자유 입력) */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className={labelCls} style={{marginBottom:0}}>방문 시간</label>
                 <label className="flex items-center gap-1 cursor-pointer">
                   <CheckBox color="green" checked={form.isVacant}
                     onChange={() => setForm(p => ({ ...p, isVacant: !p.isVacant }))} size="sm" />
-                  <span className={cn('text-[11px] font-bold whitespace-nowrap', form.isVacant ? 'text-emerald-600' : 'text-slate-400')}>공실</span>
+                  <span className={cn('text-[11px] font-semibold whitespace-nowrap', form.isVacant ? 'text-emerald-600' : 'text-slate-400')}>공실</span>
                 </label>
               </div>
-              <div className="flex gap-1.5 mb-1.5">
-                <button type="button" onClick={() => handleAmpm('오전')}
-                  className={cn('flex-1 py-2 text-[12px] font-bold rounded-xl border transition-all',
-                    ampm === '오전' ? 'bg-brand-500 text-white border-brand-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300')}>
-                  오전
-                </button>
-                <button type="button" onClick={() => handleAmpm('오후')}
-                  className={cn('flex-1 py-2 text-[12px] font-bold rounded-xl border transition-all',
-                    ampm === '오후' ? 'bg-brand-500 text-white border-brand-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300')}>
-                  오후
-                </button>
-              </div>
+            </div>
+
+            {/* 방문 시간 */}
+            <div>
+              <label className={labelCls}>방문 시간</label>
               <input
-                type="text"
-                inputMode="numeric"
-                value={timeText}
-                onChange={e => handleTimeText(e.target.value)}
-                placeholder="예) 10:00"
+                type="time"
+                value={toTimeInput(form.visitTime)}
+                onChange={e => setForm(p => ({ ...p, visitTime: fromTimeInput(e.target.value) }))}
                 className={inputCls}
               />
             </div>
@@ -347,13 +330,22 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
             </div>
           </div>
 
-          {/* 반려동물 */}
-          <div>
-            <label className={labelCls}>반려동물</label>
-            <select name="hasPet" value={form.hasPet} onChange={handleChange} className={selectCls}
-              style={{ backgroundImage: CARET, backgroundRepeat:'no-repeat', backgroundPosition:'right 10px center' }}>
-              <option>가능</option><option>불가능</option>
-            </select>
+          {/* 반려동물 + 주차 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>반려동물</label>
+              <select name="hasPet" value={form.hasPet} onChange={handleChange} className={selectCls}
+                style={{ backgroundImage: CARET, backgroundRepeat:'no-repeat', backgroundPosition:'right 10px center' }}>
+                <option>가능</option><option>불가능</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>주차</label>
+              <select name="parking" value={form.parking} onChange={handleChange} className={selectCls}
+                style={{ backgroundImage: CARET, backgroundRepeat:'no-repeat', backgroundPosition:'right 10px center' }}>
+                <option>주차가능</option><option>주차불가능</option>
+              </select>
+            </div>
           </div>
 
           {/* 방문 연락처 */}

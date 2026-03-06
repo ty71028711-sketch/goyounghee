@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 
 export default function ExpiredPage() {
   const { firebaseUser, appUser, expiryError, loading, logout } = useAuth();

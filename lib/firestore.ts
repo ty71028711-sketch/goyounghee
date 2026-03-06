@@ -3,7 +3,7 @@ import {
   collection, onSnapshot, addDoc,
   query, orderBy, Unsubscribe,
 } from 'firebase/firestore';
-import { db, FIREBASE_APP_ID } from './firebase';
+import { db, FIREBASE_APP_ID } from '@/auth/firebase';
 import { AppUser, ApplicationForm, ApplicationStatus, Archive, BusinessCard, DeviceInfo, Visit } from '@/types';
 
 /* ── 사용자 ─────────────────────────────────── */

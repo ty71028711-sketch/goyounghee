@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import ApplicationForm from '@/components/ApplicationForm';
 
 export default function LoginPage() {
@@ -10,9 +10,24 @@ export default function LoginPage() {
           pendingNewUser, signInWithGoogle, logout, completeSignup } = useAuth();
   const router = useRouter();
 
+  const [localTimeout, setLocalTimeout] = useState(false);
   const [signupName,    setSignupName]    = useState('');
   const [signupPhone,   setSignupPhone]   = useState('');
   const [signupLoading, setSignupLoading] = useState(false);
+
+  // 3초 안전 타임아웃 — loading이 지연돼도 무한스피너 방지
+  useEffect(() => {
+    const t = setTimeout(() => setLocalTimeout(true), 3_000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // approved 유저: loading 완료(또는 3초 타임아웃) 후 dashboard로 자동 이동
+  useEffect(() => {
+    if (loading && !localTimeout) return;
+    if (appUser?.status === 'approved' && appUser?.planStatus === '사용중' && !deviceError && !expiryError) {
+      router.replace('/dashboard');
+    }
+  }, [loading, localTimeout, appUser, deviceError, expiryError, router]);
 
   async function handleSignupSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,8 +37,8 @@ export default function LoginPage() {
     setSignupLoading(false);
   }
 
-  // ── 세션 체크 중 로딩 ──
-  if (loading) {
+  // ── 세션 체크 중 로딩 (최대 3초) ──
+  if (loading && !localTimeout) {
     return (
       <div className="min-h-screen bg-[#050d1f] flex flex-col items-center justify-center gap-5">
         <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-amber-900/50">
