@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/auth/AuthContext';
-import DashboardApp from '@/components/DashboardApp';
+import DashboardApp from '@/core/DashboardApp';
 
 export default function DashboardPage() {
   const { firebaseUser, appUser, loading, deviceError, expiryError } = useAuth();

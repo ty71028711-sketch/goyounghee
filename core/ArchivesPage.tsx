@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { useArchives } from '@/hooks/useArchives';
+import { useArchives } from './hooks/useArchives';
 import { Archive, Visit } from '@/types';
 import { getPriceText, cn } from '@/lib/utils';
 

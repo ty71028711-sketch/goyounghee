@@ -2,9 +2,9 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { useSessionVisits } from '@/hooks/useSessionVisits';
-import { useArchives } from '@/hooks/useArchives';
-import { useBusinessCard } from '@/hooks/useBusinessCard';
+import { useSessionVisits } from './hooks/useSessionVisits';
+import { useArchives } from './hooks/useArchives';
+import { useBusinessCard } from './hooks/useBusinessCard';
 import PropertyCard from './PropertyCard';
 import PropertyModal from './PropertyModal';
 import SmsComposePage from './SmsComposePage';
