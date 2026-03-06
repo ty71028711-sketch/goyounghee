@@ -99,12 +99,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [appUser,        setAppUser]        = useState<AppUser | null>(null);
   const [isAdmin,        setIsAdmin]        = useState(false);
   const [loading,        setLoading]        = useState(true);
+  // [FIX-1] GlobalSpinner는 최초 1회만. false 이후 절대 true로 돌아가지 않음
+  const [initialLoading, setInitialLoading] = useState(true);
   const [deviceError,    setDeviceError]    = useState<string | null>(null);
   const [expiryError,    setExpiryError]    = useState<string | null>(null);
   const [loginError,     setLoginError]     = useState<string | null>(null);
   const [pendingNewUser, setPendingNewUser] = useState<User | null>(null);
 
   const userDocUnsubRef = useRef<(() => void) | null>(null);
+  // [FIX-2] 승인 완료 후 onAuthStateChanged 재발화(StrictMode 이중마운트) 시 setLoading(true) 차단
+  const approvedRef = useRef(false);
 
   useEffect(() => {
     // 프로덕션에서만 리다이렉트 결과 처리 (로컬은 popup 사용)
@@ -121,16 +125,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     }
 
-    // 6초 절대 안전 타이머 — onAuthStateChanged 자체가 응답 없을 때
+    // 3초 절대 안전 타이머 — onAuthStateChanged 자체가 응답 없을 때
     const safetyTimer = setTimeout(() => {
+      console.log('[AUTH-03] safetyTimer(3s) 발동 → loading 해제');
       setLoading(false);
+      setInitialLoading(false);
     }, 3_000);
 
     const unsub = onAuthStateChanged(auth, async (user) => {
       clearTimeout(safetyTimer);
+      console.log(`[AUTH-04] onAuthStateChanged | uid=${user?.uid ?? 'null'} | approvedRef=${approvedRef.current}`);
 
-      // 인증 플로우가 어떤 이유로든 hang되더라도 최대 15초 후 강제 해제
-      const flowTimer = setTimeout(() => setLoading(false), 15_000);
+      // [FIX-3] flowTimer: 15s → 5s (withTimeout 최대값 5s에 맞춤, 로딩 최대 대기 단축)
+      const flowTimer = setTimeout(() => {
+        console.log('[AUTH-05] flowTimer(5s) 초과 → loading 강제 해제');
+        setLoading(false);
+        setInitialLoading(false);
+      }, 5_000);
 
       userDocUnsubRef.current?.();
       userDocUnsubRef.current = null;
@@ -141,16 +152,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (user) {
           await handleUserLogin(user);
         } else {
+          console.log('[AUTH-04B] user=null → 로그아웃 상태');
+          approvedRef.current = false;
           setAppUser(null);
           setIsAdmin(false);
         }
       } catch (err) {
-        console.error('[Auth] 인증 플로우 오류:', err);
+        console.error('[AUTH-04E] 인증 플로우 오류:', err);
+        approvedRef.current = false;
         setAppUser(null);
         setIsAdmin(false);
       } finally {
         clearTimeout(flowTimer);
+        console.log('[AUTH-10] finally → setLoading(false)');
         setLoading(false);
+        setInitialLoading(false);
       }
     });
 
@@ -162,7 +178,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleUserLogin(user: User) {
-    setLoading(true);
+    // [FIX-2 적용] approvedRef=true 이면 loading=true 생략 → GlobalSpinner 재등장 방지
+    if (!approvedRef.current) {
+      console.log('[AUTH-06] handleUserLogin: setLoading(true)');
+      setLoading(true);
+    } else {
+      console.log('[AUTH-06] handleUserLogin: approvedRef=true → setLoading(true) 생략 (백그라운드 재검증)');
+    }
     setDeviceError(null);
     setExpiryError(null);
 
@@ -170,8 +192,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const superAdminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
         .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
       const isSuperAdmin = superAdminEmails.includes((user.email ?? '').toLowerCase());
+      console.log(`[AUTH-07] 어드민 체크 | email=${user.email} | isSuperAdmin=${isSuperAdmin}`);
 
       let aUser = await withTimeout(getAppUser(user.uid), 5_000);
+      console.log(`[AUTH-08] Firestore 유저 | status=${aUser?.status} | planStatus=${aUser?.planStatus} | expiryDate=${aUser?.expiryDate}`);
 
       // ── 신규 유저 ──
       if (!aUser) {
@@ -221,6 +245,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // ── APPROVED 유저: 즉시 입장, 기기 체크는 백그라운드 ──
+      console.log('[AUTH-09] approved → approvedRef=true, 대시보드 진입 허용');
+      approvedRef.current = true;
       setIsAdmin(isSuperAdmin);
       setAppUser(aUser);
 
@@ -319,11 +345,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithGoogle() {
+    console.log('[AUTH-01] signInWithGoogle 시작');
     setLoginError(null);
     try {
       if (process.env.NODE_ENV === 'development') {
-        // 로컬 개발: popup 방식 (redirect는 localhost에서 third-party cookie 문제)
+        console.log('[AUTH-02] signInWithPopup 시작 (dev)');
         await signInWithPopup(auth, googleProvider);
+        console.log('[AUTH-02B] signInWithPopup 완료 → onAuthStateChanged 대기');
       } else {
         // 프로덕션: redirect 방식
         await signInWithRedirect(auth, googleProvider);
@@ -336,6 +364,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
+    console.log('[AUTH-11] logout → approvedRef=false');
+    approvedRef.current = false;
     userDocUnsubRef.current?.();
     userDocUnsubRef.current = null;
     if (firebaseUser) {
@@ -356,7 +386,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       deviceError, expiryError, loginError, pendingNewUser,
       signInWithGoogle, logout, completeSignup,
     }}>
-      {loading ? <GlobalSpinner /> : children}
+      {/* [FIX-1] initialLoading 사용: 최초 1회만 GlobalSpinner, 이후 loading 재진입해도 재등장 없음 */}
+      {initialLoading ? <GlobalSpinner /> : children}
       {/* 기기 제한 초과 팝업 — loading 해제 후 어느 페이지에서든 표시 */}
       {!loading && firebaseUser && deviceError && (
         <DeviceErrorModal error={deviceError} onLogout={logout} />
