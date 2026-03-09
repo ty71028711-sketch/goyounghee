@@ -354,6 +354,18 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
             <PhoneField value={form.visitPhone} onChange={v => setForm(p => ({ ...p, visitPhone: v }))} />
           </div>
 
+          {/* 손님 정보 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>손님 이름</label>
+              <input name="guestName" value={form.guestName ?? ''} onChange={handleChange} className={inputCls} placeholder="손님 성함" />
+            </div>
+            <div>
+              <label className={labelCls}>손님 전화번호</label>
+              <PhoneField value={form.guestPhone ?? ''} onChange={v => setForm(p => ({ ...p, guestPhone: v }))} />
+            </div>
+          </div>
+
           {/* 메모 */}
           <div>
             <label className={labelCls}>메모</label>

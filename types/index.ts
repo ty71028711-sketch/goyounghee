@@ -1,5 +1,5 @@
 export type ReceiptType      = '없음' | '현금영수증' | '세금계산서';
-export type ApplicationStatus = '신청완료' | '처리완료';
+export type ApplicationStatus = '신청완료' | '사전승인' | '처리완료';
 export type Category         = 'apt' | 'sale' | 'house';
 export type DealType         = 'sale' | 'rental' | 'saleRight' | 'saleRightRental';
 export type RentalType       = 'jeonse' | 'monthly';
@@ -25,6 +25,7 @@ export interface AppUser {
   photoURL:    string;
   status:      UserStatus;
   planStatus:  PlanStatus;
+  planLabel?:  string;
   createdAt:   number;
   approvedAt?: number;
   expiryDate?: number | null;
@@ -63,6 +64,8 @@ export interface Visit {
   visitPhone:            string;
   visitTime:             string;
   isVacant:              boolean;
+  guestName?:            string;
+  guestPhone?:           string;
   appointmentStatus:     AppointmentStatus;
   memo:                  string;
   naverUrl?:             string;
@@ -71,11 +74,13 @@ export interface Visit {
 }
 
 export interface Archive {
-  id:         string;
-  savedAt:    number;
-  visitDate:  string;
-  visitCount: number;
-  visits:     Visit[];
+  id:            string;
+  savedAt:       number;
+  visitDate:     string;
+  visitCount:    number;
+  visits:        Visit[];
+  customerName?: string;
+  customerPhone?: string;
 }
 
 export interface ApplicationForm {
@@ -110,6 +115,7 @@ export const EMPTY_VISIT: Omit<Visit, 'id'> = {
   moveInDate: '', immediateMove: false, negotiateMove: false,
   coBrokerAgency: '', coBrokerPhone: '',
   hasPet: '가능', visitPhone: '', visitTime: '', isVacant: false,
+  guestName: '', guestPhone: '',
   appointmentStatus: '가능', memo: '', naverUrl: '',
 };
 

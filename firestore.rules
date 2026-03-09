@@ -7,7 +7,7 @@ service cloud.firestore {
     // ── 슈퍼어드민: 이메일 토큰으로만 판단 (Firestore 문서 조작 불가) ──
     function isAdmin() {
       return request.auth != null &&
-        request.auth.token.email == 'ty71028711@gmail.com';
+        request.auth.token.email in ['songty5@gmail.com', 'ty71028711@gmail.com'];
     }
 
     // ── 승인된 사용자 여부 ──
@@ -25,12 +25,20 @@ service cloud.firestore {
       allow read: if request.auth != null &&
                      (request.auth.uid == uid || isAdmin());
 
-      // 최초 가입: pending 상태로만 생성, uid·email 위조 불가
+      // 최초 가입: uid·email 위조 불가
+      //   - 일반 가입: pending 상태로 생성
+      //   - 사전 승인 경로: approved 상태로 생성 허용 (preApprovals 레코드 존재 시)
       allow create: if request.auth != null
                     && request.auth.uid == uid
-                    && request.resource.data.status    == 'pending'
-                    && request.resource.data.uid       == request.auth.uid
-                    && request.resource.data.email     == request.auth.token.email;
+                    && request.resource.data.uid   == request.auth.uid
+                    && request.resource.data.email == request.auth.token.email
+                    && (
+                         request.resource.data.status == 'pending' ||
+                         (
+                           request.resource.data.status == 'approved' &&
+                           exists(/databases/$(database)/documents/preApprovals/$(request.auth.token.email.lower()))
+                         )
+                       );
 
       // 업데이트:
       //   - 관리자: 모든 필드 수정 가능
@@ -84,6 +92,18 @@ service cloud.firestore {
     match /applications/{docId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
+    }
+
+    // ────────────────────────────────────────────────────────────
+    // preApprovals 컬렉션 (이메일 기반 사전 승인)
+    //   - 관리자: create / read / delete 가능
+    //   - 로그인 사용자: 본인 이메일 레코드 read 가능 (로그인 시 자동 확인)
+    // ────────────────────────────────────────────────────────────
+    match /preApprovals/{email} {
+      allow create, delete: if isAdmin();
+      allow read: if isAdmin() ||
+                    (request.auth != null &&
+                     request.auth.token.email.lower() == email);
     }
 
     // ────────────────────────────────────────────────────────────

@@ -21,15 +21,38 @@ export default function LandingPage() {
     return () => clearTimeout(t);
   }, []);
 
+  // ── [진단] 상태 변화 추적 ──────────────────────────────────────
+  useEffect(() => {
+    console.log(
+      `[LANDING] 상태변화 | loading=${loading} | localTimeout=${localTimeout}` +
+      ` | firebaseUser=${firebaseUser?.uid ?? 'null'}` +
+      ` | appUser=${appUser ? `${appUser.status}/${appUser.planStatus}` : 'null'}` +
+      ` | deviceError=${deviceError ?? 'null'} | expiryError=${expiryError ?? 'null'}`
+    );
+  }, [loading, localTimeout, firebaseUser, appUser, deviceError, expiryError]);
+
   // 인증 상태에 따른 라우팅: loading 완료(또는 3초 타임아웃) 후 처리
   useEffect(() => {
-    if (loading && !localTimeout) return;
+    if (loading && !localTimeout) {
+      console.log('[LANDING-ROUTE] 대기 중 (loading=true, localTimeout=false)');
+      return;
+    }
+    const status    = appUser?.status ?? 'null';
+    const plan      = appUser?.planStatus ?? 'null';
+    const uid       = firebaseUser?.uid ?? 'null';
+    console.log(`[LANDING-ROUTE] 판단 시작 | uid=${uid} | status=${status} | plan=${plan} | deviceError=${deviceError ?? 'null'} | expiryError=${expiryError ?? 'null'}`);
+
     if (appUser?.status === 'approved' && appUser?.planStatus === '사용중' && !deviceError && !expiryError) {
+      console.log('[LANDING-ROUTE] → /dashboard');
       router.replace('/dashboard');
     } else if (firebaseUser && appUser && appUser.status !== 'approved' && !deviceError && !expiryError) {
+      console.log('[LANDING-ROUTE] → /pending');
       router.replace('/pending');
     } else if (firebaseUser && appUser && expiryError) {
+      console.log('[LANDING-ROUTE] → /expired');
       router.replace('/expired');
+    } else {
+      console.log('[LANDING-ROUTE] 조건 없음 → 랜딩 표시');
     }
   }, [loading, localTimeout, appUser, deviceError, expiryError, firebaseUser, router]);
 

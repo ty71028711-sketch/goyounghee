@@ -2,7 +2,7 @@ import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
   collection, onSnapshot, Unsubscribe,
 } from 'firebase/firestore';
-import { db, FIREBASE_APP_ID } from './firebase';
+import { db, auth, FIREBASE_APP_ID } from './firebase';
 import { AppUser, DeviceInfo } from '@/types';
 
 /* ── 사용자 ─────────────────────────────────── */
@@ -26,15 +26,29 @@ export async function updateUserStatus(uid: string, status: 'approved' | 'reject
   });
 }
 
-export async function approveOneYear(uid: string): Promise<void> {
+/* days=0 이면 만료일 없음(무제한) */
+export async function approveUser(uid: string, days: number, planLabel: string): Promise<void> {
+  const cu = auth.currentUser;
+  const path = `users/${uid}`;
+  console.log(`[USERSTORE] approveUser | path=${path}`);
+  console.log(`[USERSTORE] auth.currentUser | uid=${cu?.uid ?? 'null'} | email=${cu?.email ?? 'null'}`);
   const now = Date.now();
-  const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
   await updateDoc(doc(db, 'users', uid), {
     status:     'approved',
     planStatus: '사용중',
+    planLabel,
     approvedAt: now,
-    expiryDate: now + ONE_YEAR_MS,
+    expiryDate: days > 0 ? now + days * 24 * 60 * 60 * 1000 : null,
   });
+  console.log(`[USERSTORE] approveUser 성공 | path=${path}`);
+}
+
+export async function approveTrial(uid: string): Promise<void> {
+  return approveUser(uid, 7, '7일 무료체험');
+}
+
+export async function approveOneYear(uid: string): Promise<void> {
+  return approveUser(uid, 365, '1년 구독');
 }
 
 /* 기기 저장 경로: /artifacts/${appId}/users/${uid}/devices/${deviceId} */

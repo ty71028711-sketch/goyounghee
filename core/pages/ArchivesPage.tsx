@@ -55,6 +55,13 @@ function ArchiveCard({ arc, onDelete }: { arc: Archive; onDelete: (id: string) =
                 <> · <span className="text-blue-600 font-semibold">방문완료 {completedCount}건</span></>
               )}
             </p>
+            {(arc.customerName || arc.customerPhone) && (
+              <p className="text-[11px] text-slate-400 ml-5.5 mt-0.5">
+                {arc.customerName && <span>손님 : <span className="text-slate-600 font-semibold">{arc.customerName}</span></span>}
+                {arc.customerName && arc.customerPhone && <span className="mx-1">·</span>}
+                {arc.customerPhone && <span>전화 : <span className="text-slate-600 font-semibold">{arc.customerPhone}</span></span>}
+              </p>
+            )}
           </div>
 
           {/* 펼치기 + 삭제 */}

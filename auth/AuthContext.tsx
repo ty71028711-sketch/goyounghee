@@ -8,6 +8,7 @@ import {
   subscribeUserDoc, updateUserStatus,
 } from './userStore';
 import { getDeviceId, getDeviceType, getDeviceName } from './deviceFingerprint';
+import { getPreApproval, deletePreApproval } from '@/lib/firestore';
 import { AppUser } from '@/types';
 
 interface AuthContextValue {
@@ -199,8 +200,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // ── 신규 유저 ──
       if (!aUser) {
-        setPendingNewUser(user);
-        return;
+        // 이메일 사전 승인 확인
+        const preApproval = await withTimeout(getPreApproval(user.email ?? ''), 3_000).catch(() => null);
+        if (preApproval) {
+          console.log(`[AUTH-08B] 사전 승인 발견 | email=${user.email} | planLabel=${preApproval.planLabel}`);
+          const now = Date.now();
+          const newUserData: Omit<AppUser, 'devices'> = {
+            uid:         user.uid,
+            email:       user.email ?? '',
+            displayName: user.displayName ?? '',
+            name:        preApproval.name || user.displayName || '',
+            phone:       preApproval.phone || '',
+            photoURL:    user.photoURL ?? '',
+            status:      'approved',
+            planStatus:  '사용중',
+            planLabel:   preApproval.planLabel,
+            createdAt:   now,
+            approvedAt:  now,
+            expiryDate:  preApproval.days > 0 ? now + preApproval.days * 24 * 60 * 60 * 1000 : null,
+          };
+          await withTimeout(createAppUser(newUserData), 5_000);
+          await withTimeout(deletePreApproval(user.email ?? ''), 3_000).catch(() => {});
+          aUser = { ...newUserData, devices: [] };
+        } else {
+          setPendingNewUser(user);
+          return;
+        }
       }
 
       // ── 슈퍼어드민 자동 승인 ──

@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/auth/AuthContext';
 import {
-  subscribeAllUsers, updateUserStatus, revokeDevice, approveOneYear,
+  subscribeAllUsers, updateUserStatus, revokeDevice, approveUser,
 } from '@/auth/userStore';
-import { subscribeApplications, updateApplicationStatus } from '@/lib/firestore';
+import { subscribeApplications, updateApplicationStatus, deleteApplication, createPreApproval, deletePreApproval } from '@/lib/firestore';
 import { AppUser, ApplicationForm, UserStatus } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -51,7 +51,7 @@ export default function AdminPage() {
   async function handleApproveOneYear(uid: string) {
     const key = `year_${uid}`;
     setBusy(b => ({ ...b, [key]: true }));
-    await approveOneYear(uid);
+    await approveUser(uid, 365, '1년 구독');
     setBusy(b => ({ ...b, [key]: false }));
   }
 
@@ -62,11 +62,65 @@ export default function AdminPage() {
     setBusy(b => ({ ...b, [key]: false }));
   }
 
-  async function handleAppStatus(id: string, status: '신청완료' | '처리완료') {
-    const key = `app_${id}`;
+  // 신청서 승인: 로그인 사용자 → 즉시 승인(처리완료), 미로그인 → 사전 승인 등록(사전승인)
+  async function handleApproveApp(app: ApplicationForm, plan: '7일' | '1년') {
+    const key = `app_${app.id}_${plan}`;
+    const days = plan === '7일' ? 7 : 365;
+    const planLabel = plan === '7일' ? '7일 무료체험' : '1년 구독';
+    const matched = users.find(u => u.email.toLowerCase() === app.googleEmail.toLowerCase());
+    console.log(`[ADMIN] handleApproveApp | plan=${plan} | googleEmail=${app.googleEmail} | matched=${matched?.uid ?? '없음(사전승인경로)'}`);
     setBusy(b => ({ ...b, [key]: true }));
-    await updateApplicationStatus(id, status);
-    setBusy(b => ({ ...b, [key]: false }));
+    try {
+      if (matched) {
+        await approveUser(matched.uid, days, planLabel);
+        await updateApplicationStatus(app.id, '처리완료');
+        setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: '처리완료' as const } : a));
+      } else {
+        await createPreApproval(app.googleEmail, app.name, app.phone, days, planLabel);
+        await updateApplicationStatus(app.id, '사전승인');
+        setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: '사전승인' as const } : a));
+      }
+    } catch (e) {
+      console.error('[Admin] 승인 오류:', e);
+      alert(`승인 처리 중 오류가 발생했습니다.\n${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBusy(b => ({ ...b, [key]: false }));
+    }
+  }
+
+  // 되돌리기: 사전승인이면 preApproval 문서도 함께 삭제
+  async function handleRevertApp(app: ApplicationForm) {
+    if (!confirm('신청완료 상태로 되돌릴까요?')) return;
+    const key = `app_${app.id}_revert`;
+    setBusy(b => ({ ...b, [key]: true }));
+    try {
+      if (app.status === '사전승인') {
+        const matched = users.find(u => u.email.toLowerCase() === app.googleEmail.toLowerCase());
+        if (!matched) await deletePreApproval(app.googleEmail);
+      }
+      await updateApplicationStatus(app.id, '신청완료');
+      setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: '신청완료' as const } : a));
+    } catch (e) {
+      console.error('[Admin] 되돌리기 오류:', e);
+      alert(`오류가 발생했습니다.\n${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBusy(b => ({ ...b, [key]: false }));
+    }
+  }
+
+  // 신청서 삭제
+  async function handleDeleteApp(id: string) {
+    if (!confirm('이 신청서를 삭제할까요?')) return;
+    const key = `del_${id}`;
+    setBusy(b => ({ ...b, [key]: true }));
+    try {
+      await deleteApplication(id);
+    } catch (e) {
+      console.error('[Admin] 삭제 오류:', e);
+      alert(`삭제 중 오류가 발생했습니다.\n${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBusy(b => ({ ...b, [key]: false }));
+    }
   }
 
   const filtered = filter === 'all' ? users : users.filter(u => u.status === filter);
@@ -76,7 +130,8 @@ export default function AdminPage() {
     rejected: users.filter(u => u.status === 'rejected').length,
     all:      users.length,
   };
-  const appNew = applications.filter(a => a.status === '신청완료').length;
+  const appNew     = applications.filter(a => a.status === '신청완료').length;
+  const appPending = applications.filter(a => a.status === '사전승인').length;
 
   if (loading) return (
     <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center">
@@ -136,12 +191,13 @@ export default function AdminPage() {
       <div className="max-w-5xl mx-auto px-5 py-8">
 
         {/* ── 통계 카드 ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
           {([
             { label: '전체 회원',   value: counts.all,        color: 'from-blue-600 to-blue-800',       icon: '👥' },
             { label: '승인 대기',   value: counts.pending,    color: 'from-amber-500 to-amber-700',     icon: '⏳' },
             { label: '승인 완료',   value: counts.approved,   color: 'from-emerald-500 to-emerald-700', icon: '✅' },
             { label: '신규 신청서', value: appNew,             color: 'from-orange-500 to-orange-700',   icon: '📋' },
+            { label: '사전승인 대기', value: appPending,        color: 'from-blue-500 to-blue-700',       icon: '🔑' },
           ] as const).map(({ label, value, color, icon }) => (
             <div key={label} className="bg-[#0d1426] border border-blue-900/40 rounded-2xl p-4 relative overflow-hidden">
               <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-10`} />
@@ -354,95 +410,119 @@ export default function AdminPage() {
               </div>
             )}
 
-            {applications.map(app => (
-              <div key={app.id}
-                className={cn(
-                  'bg-[#0d1426] border rounded-2xl p-5 transition-colors',
-                  app.status === '신청완료'
-                    ? 'border-amber-500/40 hover:border-amber-400/60'
-                    : 'border-blue-900/30 opacity-60 hover:opacity-80'
-                )}
-              >
-                <div className="flex items-start gap-4">
-                  {/* 아이콘 */}
-                  <div className="w-11 h-11 rounded-full flex-shrink-0 bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-lg">
-                    📝
-                  </div>
+            {applications.map(app => {
+              const matchedUser   = users.find(u => u.email.toLowerCase() === app.googleEmail.toLowerCase());
+              const isWaiting     = app.status === '사전승인' && !matchedUser;
+              const isActive      = app.status === '처리완료' || (app.status === '사전승인' && matchedUser?.status === 'approved');
+              const displayStatus = isActive  ? '사용중'
+                                  : isWaiting ? '사전승인 / 로그인 대기'
+                                  : '신청완료';
+              const displayBadgeCls = isActive  ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                                    : isWaiting ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                                    : 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+              const cardBorderCls = app.status === '신청완료' ? 'border-amber-500/40 hover:border-amber-400/60'
+                                  : isWaiting               ? 'border-blue-500/40 hover:border-blue-400/60'
+                                  : 'border-blue-900/30 opacity-60 hover:opacity-80';
 
-                  {/* 정보 */}
-                  <div className="flex-1 min-w-0">
-                    {/* 이름 + 상태 */}
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-bold text-white text-base">{app.name}</span>
-                      <span className={cn(
-                        'text-xs font-bold px-2 py-0.5 rounded-full border',
-                        app.status === '신청완료'
-                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                          : 'bg-slate-500/15 text-slate-400 border-slate-500/30'
-                      )}>
-                        {app.status}
-                      </span>
+              return (
+                <div key={app.id}
+                  className={cn('bg-[#0d1426] border rounded-2xl p-5 transition-colors', cardBorderCls)}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* 아이콘 */}
+                    <div className="w-11 h-11 rounded-full flex-shrink-0 bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-lg">
+                      📝
                     </div>
 
-                    {/* 핵심 정보 그리드 */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 mt-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-500 text-xs w-16 flex-shrink-0">전화번호</span>
-                        <a href={`tel:${app.phone}`} className="text-blue-400 hover:text-blue-300 text-xs font-semibold transition-colors">
-                          {app.phone}
-                        </a>
+                    {/* 정보 */}
+                    <div className="flex-1 min-w-0">
+                      {/* 이름 + 상태 */}
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="font-bold text-white text-base">{app.name}</span>
+                        <span className={cn('text-xs font-bold px-2 py-0.5 rounded-full border', displayBadgeCls)}>
+                          {displayStatus}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-500 text-xs w-16 flex-shrink-0">입금자명</span>
-                        <span className="text-white text-xs font-semibold">{app.depositorName}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-500 text-xs w-16 flex-shrink-0">구글 ID</span>
-                        <span className="text-slate-300 text-xs truncate">{app.googleEmail}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-500 text-xs w-16 flex-shrink-0">플랜</span>
-                        <span className="text-amber-400 text-xs font-semibold">{app.plan}</span>
-                      </div>
-                      {app.receiptType !== '없음' && (
-                        <div className="flex items-center gap-2 sm:col-span-2">
-                          <span className="text-slate-500 text-xs w-16 flex-shrink-0">증빙</span>
-                          <span className="text-slate-300 text-xs">
-                            {app.receiptType}
-                            {app.receiptInfo && ` · ${app.receiptInfo}`}
-                          </span>
+
+                      {/* 핵심 정보 그리드 */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 mt-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 text-xs w-16 flex-shrink-0">전화번호</span>
+                          <a href={`tel:${app.phone}`} className="text-blue-400 hover:text-blue-300 text-xs font-semibold transition-colors">
+                            {app.phone}
+                          </a>
                         </div>
-                      )}
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 text-xs w-16 flex-shrink-0">입금자명</span>
+                          <span className="text-white text-xs font-semibold">{app.depositorName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 text-xs w-16 flex-shrink-0">구글 ID</span>
+                          <span className="text-slate-300 text-xs truncate">{app.googleEmail}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 text-xs w-16 flex-shrink-0">플랜</span>
+                          <span className="text-amber-400 text-xs font-semibold">{app.plan}</span>
+                        </div>
+                        {app.receiptType !== '없음' && (
+                          <div className="flex items-center gap-2 sm:col-span-2">
+                            <span className="text-slate-500 text-xs w-16 flex-shrink-0">증빙</span>
+                            <span className="text-slate-300 text-xs">
+                              {app.receiptType}
+                              {app.receiptInfo && ` · ${app.receiptInfo}`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <p className="text-slate-600 text-xs mt-2">
+                        신청일: {new Date(app.createdAt).toLocaleString('ko-KR')}
+                      </p>
                     </div>
 
-                    <p className="text-slate-600 text-xs mt-2">
-                      신청일: {new Date(app.createdAt).toLocaleString('ko-KR')}
-                    </p>
-                  </div>
-
-                  {/* 액션 버튼 */}
-                  <div className="flex flex-col gap-2 flex-shrink-0">
-                    {app.status === '신청완료' ? (
+                    {/* 액션 버튼 */}
+                    <div className="flex flex-col gap-2 flex-shrink-0">
+                      {app.status === '신청완료' ? (
+                        <>
+                          {!matchedUser && (
+                            <p className="text-[10px] text-slate-500 text-center whitespace-nowrap">미로그인 → 사전 승인 등록</p>
+                          )}
+                          <button
+                            disabled={busy[`app_${app.id}_7일`]}
+                            onClick={() => handleApproveApp(app, '7일')}
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap"
+                          >
+                            {busy[`app_${app.id}_7일`] ? '...' : '🎁 7일 체험'}
+                          </button>
+                          <button
+                            disabled={busy[`app_${app.id}_1년`]}
+                            onClick={() => handleApproveApp(app, '1년')}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap"
+                          >
+                            {busy[`app_${app.id}_1년`] ? '...' : '★ 1년 승인'}
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          disabled={busy[`app_${app.id}_revert`]}
+                          onClick={() => handleRevertApp(app)}
+                          className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 disabled:opacity-40 text-slate-400 text-xs font-bold rounded-xl border border-slate-600/40 transition-colors whitespace-nowrap"
+                        >
+                          {busy[`app_${app.id}_revert`] ? '...' : '↩ 되돌리기'}
+                        </button>
+                      )}
                       <button
-                        disabled={busy[`app_${app.id}`]}
-                        onClick={() => handleAppStatus(app.id, '처리완료')}
-                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap"
+                        disabled={busy[`del_${app.id}`]}
+                        onClick={() => handleDeleteApp(app.id)}
+                        className="px-4 py-2 bg-[#1a2035] hover:bg-red-700/70 disabled:opacity-40 text-slate-400 hover:text-white text-xs font-bold rounded-xl border border-blue-900/40 hover:border-red-600/60 transition-colors whitespace-nowrap"
                       >
-                        {busy[`app_${app.id}`] ? '...' : '✓ 처리완료'}
+                        {busy[`del_${app.id}`] ? '...' : '✕ 삭제'}
                       </button>
-                    ) : (
-                      <button
-                        disabled={busy[`app_${app.id}`]}
-                        onClick={() => handleAppStatus(app.id, '신청완료')}
-                        className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 disabled:opacity-40 text-slate-400 text-xs font-bold rounded-xl border border-slate-600/40 transition-colors whitespace-nowrap"
-                      >
-                        {busy[`app_${app.id}`] ? '...' : '↩ 되돌리기'}
-                      </button>
-                    )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

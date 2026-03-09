@@ -20,6 +20,70 @@ type Sort = 'timeAsc' | 'timeDesc' | 'available';
 // ── 토스트 타입 ───────────────────────────────────────────────────
 interface ToastItem { id: string; visitName: string; message: string; }
 
+// ── 보관함 저장 모달 ──────────────────────────────────────────────
+function ArchiveSaveModal({
+  visitCount,
+  onConfirm,
+  onCancel,
+}: {
+  visitCount: number;
+  onConfirm: (customerName: string, customerPhone: string) => void;
+  onCancel: () => void;
+}) {
+  const [name,  setName]  = useState('');
+  const [phone, setPhone] = useState('');
+
+  function handlePhoneChange(v: string) {
+    const digits = v.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 3)       setPhone(digits);
+    else if (digits.length <= 7)  setPhone(`${digits.slice(0,3)}-${digits.slice(3)}`);
+    else                          setPhone(`${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`);
+  }
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/40 backdrop-blur-sm">
+      <div className="w-full max-w-[560px] bg-white rounded-t-3xl px-5 pt-6 pb-8 shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-[16px] font-black text-slate-900">보관함 저장</p>
+            <p className="text-[12px] text-slate-400 mt-0.5">방문 기록 {visitCount}건을 저장합니다</p>
+          </div>
+          <button onClick={onCancel} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 text-[18px]">✕</button>
+        </div>
+
+        <div className="space-y-3 mb-5">
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 mb-1">손님 이름 <span className="font-normal text-slate-400">(선택)</span></label>
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="손님 성함"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[14px] text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 mb-1">손님 전화번호 <span className="font-normal text-slate-400">(선택)</span></label>
+            <input
+              value={phone}
+              onChange={e => handlePhoneChange(e.target.value)}
+              placeholder="010-0000-0000"
+              inputMode="numeric"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[14px] text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={() => onConfirm(name.trim(), phone.trim())}
+          className="w-full py-3.5 bg-gradient-to-r from-brand-500 to-brand-600 text-white text-[14px] font-bold rounded-2xl shadow-lg shadow-brand-200 hover:opacity-90 active:scale-[.98] transition-all"
+        >
+          저장하기
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── 헤더 ── */
 function Header({ isAdmin }: { isAdmin: boolean }) {
   const [time, setTime] = useState(() => new Date());
@@ -109,12 +173,13 @@ export default function DashboardApp() {
   const { save: saveToArchive, saving }         = useArchives(firebaseUser?.uid);
   const { card }                                = useBusinessCard(firebaseUser?.uid);
 
-  const [tab,          setTab]          = useState<Tab>('list');
-  const [sortMode,     setSortMode]     = useState<Sort>('timeAsc');
-  const [selectedIds,  setSelectedIds]  = useState<Set<string>>(new Set());
-  const [showModal,    setShowModal]    = useState(false);
-  const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
-  const [toasts,       setToasts]       = useState<ToastItem[]>([]);
+  const [tab,             setTab]             = useState<Tab>('list');
+  const [sortMode,        setSortMode]        = useState<Sort>('timeAsc');
+  const [selectedIds,     setSelectedIds]     = useState<Set<string>>(new Set());
+  const [showModal,       setShowModal]       = useState(false);
+  const [editingVisit,    setEditingVisit]    = useState<Visit | null>(null);
+  const [toasts,          setToasts]          = useState<ToastItem[]>([]);
+  const [showArchiveSave, setShowArchiveSave] = useState(false);
 
   // ── 토스트 표시 ────────────────────────────────────────────────
   function showToast(visitName: string, message: string) {
@@ -218,17 +283,17 @@ export default function DashboardApp() {
   }
 
   // ── 보관함 저장 ───────────────────────────────────────────────
-  async function handleSaveToArchive() {
+  function handleSaveToArchive() {
     if (visits.length === 0) {
       showToast('알림', '저장할 방문 기록이 없습니다.');
       return;
     }
-    const ok = window.confirm(
-      `오늘 방문 기록 ${visits.length}건을 보관함에 저장할까요?\n저장 후 현재 목록은 초기화됩니다.`
-    );
-    if (!ok) return;
+    setShowArchiveSave(true);
+  }
 
-    const success = await saveToArchive(visits);
+  async function handleArchiveConfirm(customerName: string, customerPhone: string) {
+    setShowArchiveSave(false);
+    const success = await saveToArchive(visits, customerName || undefined, customerPhone || undefined);
     if (success) {
       clear(visits);
       setSelectedIds(new Set());
@@ -371,6 +436,15 @@ export default function DashboardApp() {
           initialData={editingVisit ?? undefined}
           onSave={handleSave}
           onClose={closeModal}
+        />
+      )}
+
+      {/* 보관함 저장 모달 */}
+      {showArchiveSave && (
+        <ArchiveSaveModal
+          visitCount={visits.length}
+          onConfirm={handleArchiveConfirm}
+          onCancel={() => setShowArchiveSave(false)}
         />
       )}
     </div>

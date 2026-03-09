@@ -14,11 +14,11 @@ export function useArchives(uid: string | undefined) {
     return unsub;
   }, [uid]);
 
-  const save = useCallback(async (visits: Visit[]): Promise<boolean> => {
+  const save = useCallback(async (visits: Visit[], customerName?: string, customerPhone?: string): Promise<boolean> => {
     if (!uid || visits.length === 0) return false;
     setSaving(true);
     try {
-      await saveArchive(uid, visits);
+      await saveArchive(uid, visits, customerName, customerPhone);
       return true;
     } catch (e) {
       console.error('archive save error', e);

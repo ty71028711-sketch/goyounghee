@@ -1,5 +1,5 @@
 import {
-  doc, getDoc, setDoc, updateDoc, deleteDoc,
+  doc, getDoc, setDoc, deleteDoc,
   collection, onSnapshot, addDoc,
   query, orderBy, Unsubscribe,
 } from 'firebase/firestore';
@@ -41,14 +41,16 @@ function archivesCol(uid: string) {
   return collection(db, 'archives', uid, 'saves');
 }
 
-export async function saveArchive(uid: string, visits: Visit[]): Promise<string> {
+export async function saveArchive(uid: string, visits: Visit[], customerName?: string, customerPhone?: string): Promise<string> {
   const now = new Date();
-  const visitDate = now.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+  const visitDate = now.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
   const ref = await addDoc(archivesCol(uid), {
-    savedAt:    now.getTime(),
+    savedAt:       now.getTime(),
     visitDate,
-    visitCount: visits.length,
+    visitCount:    visits.length,
     visits,
+    ...(customerName  ? { customerName }  : {}),
+    ...(customerPhone ? { customerPhone } : {}),
   });
   return ref.id;
 }
