@@ -10,40 +10,59 @@ declare global {
         load: (cb: () => void) => void;
         Map: new (container: HTMLElement, options: object) => KakaoMap;
         LatLng: new (lat: number, lng: number) => KakaoLatLng;
+        Marker: new (options: object) => KakaoMarker;
         CustomOverlay: new (options: object) => void;
         event: { addListener: (target: object, type: string, handler: () => void) => void };
       };
     };
   }
 }
-interface KakaoMap  { setCenter(latlng: KakaoLatLng): void; }
+interface KakaoMap    { setCenter(latlng: KakaoLatLng): void; }
 interface KakaoLatLng { getLat(): number; getLng(): number; }
+interface KakaoMarker { setMap(map: KakaoMap | null): void; setPosition(latlng: KakaoLatLng): void; }
 
 const APP_KEY = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY ?? '';
 
 function loadKakaoScript(): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (window.kakao?.maps) { resolve(); return; }
-    const existing = document.getElementById('kakao-map-sdk');
-    if (existing) {
-      existing.addEventListener('load', () => resolve());
-      existing.addEventListener('error', reject);
+    const scriptSrc = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${APP_KEY}&autoload=false`;
+    console.log('[KAKAO] loadKakaoScript 시작');
+    console.log('[KAKAO] APP_KEY:', APP_KEY ? `${APP_KEY.slice(0, 6)}...` : '(없음)');
+    console.log('[KAKAO] 스크립트 URL:', scriptSrc);
+
+    if (window.kakao?.maps) {
+      console.log('[KAKAO] window.kakao.maps 이미 존재 → 바로 resolve');
+      resolve();
       return;
     }
+
+    const existing = document.getElementById('kakao-map-sdk');
+    if (existing) {
+      console.log('[KAKAO] 기존 script 태그 발견, load/error 이벤트 대기');
+      existing.addEventListener('load', () => { console.log('[KAKAO] 기존 script onload'); resolve(); });
+      existing.addEventListener('error', (e) => { console.error('[KAKAO] 기존 script onerror', e); reject(e); });
+      return;
+    }
+
     const s = document.createElement('script');
     s.id  = 'kakao-map-sdk';
-    s.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${APP_KEY}&autoload=false`;
+    s.src = scriptSrc;
     s.async = true;
-    s.onload  = () => resolve();
-    s.onerror = () => reject(new Error('script_load_fail'));
+    s.onload  = () => { console.log('[KAKAO] script onload 완료'); resolve(); };
+    s.onerror = (e) => {
+      console.error('[KAKAO] script onerror — 스크립트 로드 실패', e);
+      console.error('[KAKAO] 원인 가능성: 1) 앱키 오류  2) 도메인 미등록  3) 네트워크 차단');
+      reject(new Error('script_load_fail'));
+    };
+    console.log('[KAKAO] script 태그 head에 추가');
     document.head.appendChild(s);
   });
 }
 
 export default function IjangMapPage() {
-  const containerRef   = useRef<HTMLDivElement>(null);
-  const mapRef         = useRef<KakaoMap | null>(null);
-  const overlayRef     = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef       = useRef<KakaoMap | null>(null);
+  const markerRef    = useRef<KakaoMarker | null>(null);
 
   const [mapReady,      setMapReady]      = useState(false);
   const [loadError,     setLoadError]     = useState<string | null>(null);
@@ -63,38 +82,27 @@ export default function IjangMapPage() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords;
+        console.log('[KAKAO] geolocation 성공 — lat:', lat, 'lng:', lng);
         const latlng = new window.kakao.maps.LatLng(lat, lng);
+
+        // 지도 중심 이동
         mapRef.current!.setCenter(latlng);
 
-        // 현재 위치 마커 (파란 점 + 파동)
-        if (overlayRef.current) overlayRef.current.remove();
-        const dot = document.createElement('div');
-        dot.style.cssText = `
-          position:relative; width:20px; height:20px;
-          transform:translate(-50%,-50%);
-        `;
-        dot.innerHTML = `
-          <div style="
-            position:absolute; inset:0;
-            background:rgba(59,130,246,0.25);
-            border-radius:50%;
-            animation:kakao-pulse 2s ease-out infinite;
-          "></div>
-          <div style="
-            position:absolute; top:50%; left:50%;
-            transform:translate(-50%,-50%);
-            width:12px; height:12px;
-            background:#3B82F6;
-            border:2.5px solid white;
-            border-radius:50%;
-            box-shadow:0 0 6px rgba(59,130,246,.6);
-          "></div>
-        `;
-        overlayRef.current = dot;
-        new window.kakao.maps.CustomOverlay({ position: latlng, content: dot, map: (mapRef.current as any) });
+        // 기존 마커 제거 후 새 마커 생성
+        if (markerRef.current) {
+          markerRef.current.setMap(null);
+          console.log('[KAKAO] 이전 마커 제거');
+        }
+        markerRef.current = new window.kakao.maps.Marker({
+          position: latlng,
+          map: mapRef.current as any,
+        });
+        console.log('[KAKAO] Marker 생성 완료 — lat:', lat, 'lng:', lng);
         setLocating(false);
       },
       (err) => {
+        console.error('[KAKAO] geolocation 실패 — code:', err.code, 'message:', err.message);
+        console.error('[KAKAO] code 의미: 1=권한거부 2=위치불가 3=타임아웃');
         setLocating(false);
         if (err.code === 1) setLocationError('위치 권한이 거부되었습니다. 브라우저 설정에서 허용해 주세요.');
         else                setLocationError('현재 위치를 가져올 수 없습니다. 다시 시도해 주세요.');
@@ -105,24 +113,40 @@ export default function IjangMapPage() {
 
   /* ── 지도 초기화 ── */
   useEffect(() => {
+    console.log('[KAKAO] useEffect 진입');
+    console.log('[KAKAO] APP_KEY 존재 여부:', !!APP_KEY);
+
     if (!APP_KEY) {
+      console.error('[KAKAO] APP_KEY 없음 → no_key 에러');
       setLoadError('no_key');
       return;
     }
 
     let cancelled = false;
     loadKakaoScript()
-      .then(() => new Promise<void>((res) => window.kakao.maps.load(res)))
       .then(() => {
-        if (cancelled || !containerRef.current) return;
+        console.log('[KAKAO] script 로드 완료');
+        console.log('[KAKAO] window.kakao 존재:', !!window.kakao);
+        console.log('[KAKAO] window.kakao.maps 존재:', !!window.kakao?.maps);
+        return new Promise<void>((res) => window.kakao.maps.load(res));
+      })
+      .then(() => {
+        console.log('[KAKAO] kakao.maps.load() 콜백 실행 완료');
+        if (cancelled || !containerRef.current) {
+          console.warn('[KAKAO] cancelled 또는 containerRef 없음 → 지도 초기화 중단');
+          return;
+        }
         const DEFAULT = new window.kakao.maps.LatLng(37.5665, 126.9780); // 서울 시청
         mapRef.current = new window.kakao.maps.Map(containerRef.current, {
           center: DEFAULT,
           level: 6,
         });
+        console.log('[KAKAO] Map 생성 성공');
         setMapReady(true);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('[KAKAO] 지도 로드 실패:', err);
+        console.error('[KAKAO] window.kakao:', window.kakao);
         if (!cancelled) setLoadError('load_fail');
       });
 
@@ -188,14 +212,6 @@ export default function IjangMapPage() {
 
   return (
     <>
-      {/* 카카오맵 pulse 애니메이션 */}
-      <style>{`
-        @keyframes kakao-pulse {
-          0%   { transform: scale(1);   opacity: .8; }
-          100% { transform: scale(2.8); opacity: 0;  }
-        }
-      `}</style>
-
       <div className="h-full flex flex-col relative overflow-hidden">
 
         {/* 지도 컨테이너 */}
