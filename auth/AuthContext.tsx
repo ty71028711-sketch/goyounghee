@@ -33,6 +33,27 @@ const AuthContext = createContext<AuthContextValue>({
   completeSignup: async () => {},
 });
 
+/* ── 브라우저 환경 감지 ── */
+function isMobileBrowser(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /Mobile|Android|iPhone|iPad|iPod/i.test(ua) ||
+    (navigator.maxTouchPoints > 1 && /Mac/i.test(ua));
+}
+
+/** 카카오톡·인스타·페이스북 등 인앱 WebView 감지 */
+export function isInAppBrowser(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent;
+  if (/KAKAOTALK/i.test(ua))                  return true; // 카카오톡
+  if (/Instagram|FBAN|FBAV/i.test(ua))        return true; // 인스타·페이스북
+  if (/Twitter/i.test(ua))                    return true;
+  if (/Line\//i.test(ua))                     return true;
+  if (/NAVER\(|NaverSearch|naverapp/i.test(ua)) return true; // 네이버
+  if (/Android/.test(ua) && /; wv\)/.test(ua)) return true; // Android WebView
+  return false;
+}
+
 /* ── 타임아웃 헬퍼 ── */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -112,19 +133,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const approvedRef = useRef(false);
 
   useEffect(() => {
-    // 프로덕션에서만 리다이렉트 결과 처리 (로컬은 popup 사용)
-    if (process.env.NODE_ENV !== 'development') {
-      getRedirectResult(auth).catch((err: unknown) => {
-        const code = (err as { code?: string }).code;
-        if (!code) return;
-        console.error('[Auth] 리다이렉트 로그인 오류:', err);
+    // 리다이렉트 결과 처리 — dev/prod 무관하게 항상 호출 (결과 없으면 null 반환, 안전)
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          console.log('[Auth] 리다이렉트 로그인 성공:', result.user.email);
+        }
+      })
+      .catch((err: unknown) => {
+        const code    = (err as { code?: string }).code ?? '';
+        const message = (err as { message?: string }).message ?? '';
+        console.error('[Auth] 리다이렉트 로그인 오류 — code:', code, '| message:', message);
+
+        if (!code && !message) return; // 실제 오류 없음
+
         if (code === 'auth/unauthorized-domain') {
           setLoginError('이 도메인에서는 로그인이 허용되지 않습니다. 관리자에게 문의하세요.');
-        } else {
+        } else if (
+          message.includes('disallowed_useragent') ||
+          code === 'auth/operation-not-allowed'
+        ) {
+          setLoginError(
+            '앱 내 브라우저(카카오톡·인스타 등)에서는 Google 로그인이 차단됩니다.\nChrome 또는 Safari로 열어주세요.'
+          );
+        } else if (code || message) {
           setLoginError('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
         }
       });
-    }
 
     // 3초 절대 안전 타이머 — onAuthStateChanged 자체가 응답 없을 때
     const safetyTimer = setTimeout(() => {
@@ -372,15 +407,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signInWithGoogle() {
     console.log('[AUTH-01] signInWithGoogle 시작');
     setLoginError(null);
+
+    // 인앱 브라우저(카카오톡·인스타 등) 사전 차단
+    if (isInAppBrowser()) {
+      console.warn('[AUTH-01] 인앱 브라우저 감지 → 로그인 차단');
+      setLoginError(
+        '카카오톡·인스타그램 등 앱 내 브라우저에서는 Google 로그인이 차단됩니다.\nChrome 또는 Safari로 열어서 로그인해 주세요.'
+      );
+      return;
+    }
+
+    // 모바일은 항상 redirect (dev 포함) — popup은 모바일 WebView로 처리되어 Google이 차단
+    const mobile = isMobileBrowser();
+    const useRedirect = mobile || process.env.NODE_ENV !== 'development';
+
     try {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[AUTH-02] signInWithPopup 시작 (dev)');
-        await signInWithPopup(auth, googleProvider);
-        console.log('[AUTH-02B] signInWithPopup 완료 → onAuthStateChanged 대기');
-      } else {
-        // 프로덕션: redirect 방식
+      if (useRedirect) {
+        console.log(`[AUTH-02] signInWithRedirect 시작 (mobile=${mobile})`);
         await signInWithRedirect(auth, googleProvider);
         // 브라우저가 Google로 리다이렉트됨 — 이하 코드 실행 안 됨
+      } else {
+        console.log('[AUTH-02] signInWithPopup 시작 (desktop dev)');
+        await signInWithPopup(auth, googleProvider);
+        console.log('[AUTH-02B] signInWithPopup 완료 → onAuthStateChanged 대기');
       }
     } catch (err: unknown) {
       console.error('[Auth] Google 로그인 시작 오류:', err);
