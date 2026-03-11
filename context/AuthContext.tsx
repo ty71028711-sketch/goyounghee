@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import {
   getAppUser, createAppUser, registerDevice, getDevices,
@@ -317,10 +317,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signInWithGoogle() {
     setLoginError(null);
     try {
-      await signInWithRedirect(auth, googleProvider);
-      // 브라우저가 Google로 리다이렉트됨 — 이하 코드 실행 안 됨
-    } catch (err: unknown) {
-      console.error('[Auth] Google 로그인 시작 오류:', err);
+      await signInWithPopup(auth, googleProvider);
+    } catch (popupErr: unknown) {
+      const code = (popupErr as { code?: string }).code;
+      // 팝업 차단 또는 지원 불가 환경 → redirect fallback
+      if (
+        code === 'auth/popup-blocked' ||
+        code === 'auth/popup-closed-by-user' ||
+        code === 'auth/cancelled-popup-request'
+      ) {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (redirectErr: unknown) {
+          console.error('[Auth] Google 로그인(redirect) 오류:', redirectErr);
+          setLoginError('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+        }
+        return;
+      }
+      console.error('[Auth] Google 로그인(popup) 오류:', popupErr);
       setLoginError('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
     }
   }
