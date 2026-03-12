@@ -319,7 +319,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (popupErr: unknown) {
-      const code = (popupErr as { code?: string }).code;
+      const code = (popupErr as { code?: string }).code ?? 'unknown';
+      const msg  = (popupErr as { message?: string }).message ?? String(popupErr);
       // 팝업 차단 또는 지원 불가 환경 → redirect fallback
       if (
         code === 'auth/popup-blocked' ||
@@ -329,13 +330,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           await signInWithRedirect(auth, googleProvider);
         } catch (redirectErr: unknown) {
-          console.error('[Auth] Google 로그인(redirect) 오류:', redirectErr);
-          setLoginError('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+          const rCode = (redirectErr as { code?: string }).code ?? 'unknown';
+          const rMsg  = (redirectErr as { message?: string }).message ?? String(redirectErr);
+          console.error('[Auth] Google 로그인(redirect) 오류 code:', rCode, 'message:', rMsg);
+          setLoginError(`[redirect] ${rCode}: ${rMsg}`);
         }
         return;
       }
-      console.error('[Auth] Google 로그인(popup) 오류:', popupErr);
-      setLoginError('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      console.error('[Auth] Google 로그인(popup) 오류 code:', code, 'message:', msg);
+      setLoginError(`[popup] ${code}: ${msg}`);
     }
   }
 

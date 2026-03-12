@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ApplicationForm from '@/components/ApplicationForm';
@@ -13,6 +13,14 @@ export default function LoginPage() {
   const [signupName,    setSignupName]    = useState('');
   const [signupPhone,   setSignupPhone]   = useState('');
   const [signupLoading, setSignupLoading] = useState(false);
+
+  // ── approved 유저 자동 리다이렉트 ──
+  useEffect(() => {
+    if (loading) return;
+    if (firebaseUser && appUser?.status === 'approved' && appUser?.planStatus === '사용중' && !deviceError && !expiryError) {
+      router.replace('/dashboard');
+    }
+  }, [loading, firebaseUser, appUser, deviceError, expiryError, router]);
 
   async function handleSignupSubmit(e: React.FormEvent) {
     e.preventDefault();

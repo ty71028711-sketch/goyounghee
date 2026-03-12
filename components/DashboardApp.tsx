@@ -10,7 +10,7 @@ import PropertyModal from './PropertyModal';
 import SmsComposePage from './SmsComposePage';
 import SettingsPage from './SettingsPage';
 import ArchivesPage from './ArchivesPage';
-import MapBriefingPage from './MapBriefingPage';
+import IjangMapPage from './IjangMapPage';
 import { Visit } from '@/types';
 import { getFormattedDate, cn } from '@/lib/utils';
 
@@ -76,7 +76,7 @@ function BottomNav({ tab, setTab, smsCount }: { tab:Tab; setTab:(t:Tab)=>void; s
       icon:(a:boolean)=>(<svg className={cn('w-6 h-6',a?'text-brand-500':'text-slate-400')} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5Z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>),
     },
     {
-      id:'map' as Tab, label:'지도 브리핑',
+      id:'map' as Tab, label:'임장 지도',
       icon:(a:boolean)=>(<svg className={cn('w-6 h-6',a?'text-brand-500':'text-slate-400')} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>),
     },
     {
@@ -351,7 +351,7 @@ export default function DashboardApp() {
         )}
 
         {tab === 'archive'  && <ArchivesPage />}
-        {tab === 'map'      && <MapBriefingPage visits={visits} />}
+        {tab === 'map'      && <IjangMapPage />}
         {tab === 'settings' && <SettingsPage />}
       </div>
 
