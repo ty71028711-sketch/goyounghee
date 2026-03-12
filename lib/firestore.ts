@@ -1,9 +1,9 @@
 import {
-  doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+  doc, getDoc, setDoc, updateDoc, deleteDoc,
   collection, onSnapshot, addDoc,
   query, orderBy, Unsubscribe,
 } from 'firebase/firestore';
-import { db, FIREBASE_APP_ID } from './firebase';
+import { db } from './firebase';
 import { AppUser, ApplicationForm, ApplicationStatus, Archive, BusinessCard, DeviceInfo, Visit } from '@/types';
 
 /* ── 사용자 ─────────────────────────────────── */
@@ -37,22 +37,26 @@ export async function approveOneYear(uid: string): Promise<void> {
   });
 }
 
-/* 기기 저장 경로: /artifacts/${appId}/users/${uid}/devices/${deviceId} */
-function devicesCol(uid: string) {
-  return collection(db, 'artifacts', FIREBASE_APP_ID, 'users', uid, 'devices');
-}
-
+/* 기기 목록: /users/${uid} 문서의 devices 배열 필드에 저장 */
 export async function getDevices(uid: string): Promise<DeviceInfo[]> {
-  const snap = await getDocs(devicesCol(uid));
-  return snap.docs.map(d => d.data() as DeviceInfo);
+  const snap = await getDoc(doc(db, 'users', uid));
+  return snap.exists() ? ((snap.data() as AppUser).devices ?? []) : [];
 }
 
 export async function registerDevice(uid: string, device: DeviceInfo): Promise<void> {
-  await setDoc(doc(devicesCol(uid), device.deviceId), device);
+  const snap = await getDoc(doc(db, 'users', uid));
+  if (!snap.exists()) return;
+  const existing = (snap.data() as AppUser).devices ?? [];
+  const devices = [...existing.filter(d => d.deviceId !== device.deviceId), device];
+  await updateDoc(doc(db, 'users', uid), { devices });
 }
 
 export async function revokeDevice(uid: string, deviceId: string): Promise<void> {
-  await deleteDoc(doc(devicesCol(uid), deviceId));
+  const snap = await getDoc(doc(db, 'users', uid));
+  if (!snap.exists()) return;
+  const existing = (snap.data() as AppUser).devices ?? [];
+  const devices = existing.filter(d => d.deviceId !== deviceId);
+  await updateDoc(doc(db, 'users', uid), { devices });
 }
 
 export function subscribeAllUsers(cb: (users: AppUser[]) => void): Unsubscribe {

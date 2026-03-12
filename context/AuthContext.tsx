@@ -235,19 +235,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 슈퍼어드민은 기기 체크 생략
       if (isSuperAdmin) return;
 
-      // 백그라운드 기기 체크 (2초 타임아웃, 초과 시 통과)
+      // 백그라운드 기기 체크 (Firestore 최신 devices 읽기)
       (async () => {
         try {
           const deviceId   = getDeviceId();
           const deviceType = getDeviceType();
           const deviceName = getDeviceName();
 
-          const devices = await withTimeout(getDevices(user.uid), 2_000);
+          // 로그인 시점 스냅샷(aUser.devices)이 아닌 Firestore 최신값으로 체크
+          const devices  = await withTimeout(getDevices(user.uid), 5_000);
           const already  = devices.find(d => d.deviceId === deviceId);
           const sameType = devices.filter(d => d.deviceType === deviceType);
 
           if (!already && sameType.length >= 1) {
-            // 기기 제한 초과 → 팝업 표시 (사용자가 직접 로그아웃)
+            // 기기 제한 초과 (PC 1대 + 모바일 1대) → 팝업 표시
             setDeviceError(
               deviceType === 'pc'
                 ? 'PC 기기가 이미 1대 등록되어 있습니다.\n관리자에게 기기 교체를 요청하세요.'
@@ -256,17 +257,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
           }
 
-          // 기기 등록 (fire and forget)
+          // 기기 등록 (await로 완료 보장)
           const devicePayload = already
             ? { ...already, lastLogin: Date.now() }
             : { deviceId, deviceType, deviceName, lastLogin: Date.now(), registeredAt: Date.now() };
 
-          registerDevice(user.uid, devicePayload).catch(err =>
-            console.warn('[Auth] 기기 등록 실패:', err)
-          );
-        } catch {
-          // 2초 타임아웃 또는 기타 오류 → 네트워크 느림으로 간주, 통과
-          console.warn('[Auth] 기기 체크 타임아웃, 통과 처리');
+          await registerDevice(user.uid, devicePayload);
+        } catch (err) {
+          console.warn('[Auth] 기기 체크 오류:', err);
         }
       })();
 

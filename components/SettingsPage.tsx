@@ -35,8 +35,15 @@ export default function SettingsPage() {
   async function handleRevokeDevice(deviceId: string) {
     if (!appUser) return;
     if (!confirm('이 기기를 해제하시겠습니까?\n해제된 기기는 다시 로그인해야 합니다.')) return;
-    await revokeDevice(appUser.uid, deviceId);
-    if (deviceId === myDeviceId) await logout();
+    try {
+      await revokeDevice(appUser.uid, deviceId);
+      if (deviceId === myDeviceId) await logout();
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? 'unknown';
+      const msg  = (err as { message?: string }).message ?? String(err);
+      console.error('[revokeDevice] 실패 — code:', code, 'message:', msg);
+      alert(`기기 해제에 실패했습니다.\n오류: ${code}\n${msg}`);
+    }
   }
 
   return (
