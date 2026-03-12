@@ -58,8 +58,16 @@ export default function AdminPage() {
   async function handleRevokeDevice(uid: string, deviceId: string) {
     const key = `${uid}_${deviceId}`;
     setBusy(b => ({ ...b, [key]: true }));
-    await revokeDevice(uid, deviceId);
-    setBusy(b => ({ ...b, [key]: false }));
+    try {
+      await revokeDevice(uid, deviceId);
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? 'unknown';
+      const msg  = (err as { message?: string }).message ?? String(err);
+      console.error('[admin] revokeDevice 실패 — code:', code, 'message:', msg);
+      alert(`기기 해제에 실패했습니다.\n오류: ${code}\n${msg}`);
+    } finally {
+      setBusy(b => ({ ...b, [key]: false }));
+    }
   }
 
   async function handleAppStatus(id: string, status: '신청완료' | '처리완료') {
@@ -87,7 +95,14 @@ export default function AdminPage() {
     </div>
   );
 
-  if (!isVerifiedAdmin) return null;
+  if (!isVerifiedAdmin) return (
+    <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-blue-400 text-sm">리다이렉트 중...</p>
+      </div>
+    </div>
+  );
 
   const USER_TABS: [UserStatus | 'all', string, string][] = [
     ['pending',  '대기중',  'text-amber-400  bg-amber-400/10  border-amber-400/30  data-[active=true]:bg-amber-500  data-[active=true]:text-white  data-[active=true]:border-amber-500'],
@@ -110,7 +125,7 @@ export default function AdminPage() {
             </div>
             <div>
               <p className="font-bold text-white leading-none">관리자 패널</p>
-              <p className="text-[11px] text-blue-400 mt-0.5">ImjangMate PRO</p>
+              <p className="text-[11px] text-blue-400 mt-0.5">소장노트 PRO</p>
             </div>
             <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 border border-blue-500/40 rounded-full px-2.5 py-0.5">
               슈퍼어드민
