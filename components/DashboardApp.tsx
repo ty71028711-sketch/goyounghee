@@ -36,7 +36,7 @@ function Header({ isAdmin }: { isAdmin: boolean }) {
           </svg>
         </div>
         <div>
-          <p className="font-extrabold text-[15px] text-slate-900 tracking-tight">임장메이트 <span className="text-brand-500">PRO</span></p>
+          <p className="font-extrabold text-[15px] text-slate-900 tracking-tight">소장노트 <span className="text-brand-500">PRO</span></p>
           <p className="text-[9px] text-slate-400">공인중개사 전용</p>
         </div>
       </div>

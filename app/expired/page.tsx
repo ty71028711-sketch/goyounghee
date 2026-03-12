@@ -41,7 +41,7 @@ export default function ExpiredPage() {
             <path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
           </svg>
         </div>
-        <span className="font-bold text-white text-base tracking-tight">임장메이트 <span className="text-blue-400">PRO</span></span>
+        <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
       </div>
 
       {/* 카드 */}

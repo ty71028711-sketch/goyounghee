@@ -125,19 +125,6 @@ export default function ApplicationForm() {
 
           <div>
             <label className="block text-[11px] font-bold text-blue-300 mb-1.5 uppercase tracking-widest">
-              사무실 명칭
-            </label>
-            <input
-              type="text"
-              value={form.officeName}
-              onChange={e => setField('officeName', e.target.value)}
-              placeholder="예: 행복부동산 중개사무소"
-              className="w-full bg-blue-950/50 border border-blue-800/60 rounded-xl px-4 py-3.5 text-base text-white placeholder-slate-500 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40 transition-colors"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-bold text-blue-300 mb-1.5 uppercase tracking-widest">
               입금자명 <span className="text-red-400">*</span>
             </label>
             <input
@@ -246,7 +233,7 @@ export default function ApplicationForm() {
             문의:{' '}
             <a href="http://pf.kakao.com/_LDfqX/chat" target="_blank" rel="noopener noreferrer"
               className="text-amber-400 hover:underline font-bold">
-              카카오채널 임장메이트
+              카카오채널 소장노트
             </a>
           </p>
         </form>

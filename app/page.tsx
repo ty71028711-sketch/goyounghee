@@ -41,7 +41,7 @@ export default function LoginPage() {
             <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
           </svg>
         </div>
-        <p className="text-white font-bold text-lg tracking-tight">임장메이트 <span className="text-amber-400">PRO</span></p>
+        <p className="text-white font-bold text-lg tracking-tight">소장노트 <span className="text-amber-400">PRO</span></p>
         <div className="flex items-center gap-1.5">
           {[0, 150, 300].map(delay => (
             <div key={delay} className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
@@ -67,7 +67,7 @@ export default function LoginPage() {
               <path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
             </svg>
           </div>
-          <span className="font-bold text-white text-base tracking-tight">임장메이트 <span className="text-blue-400">PRO</span></span>
+          <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
         </div>
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
           <div className="h-1.5 bg-gradient-to-r from-blue-500 to-blue-700" />
@@ -132,7 +132,7 @@ export default function LoginPage() {
               <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
             </svg>
           </div>
-          <span className="font-bold text-white text-base tracking-tight">임장메이트 <span className="text-blue-400">PRO</span></span>
+          <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
         </div>
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
           <div className="h-1.5 bg-gradient-to-r from-blue-500 to-blue-700" />
@@ -143,7 +143,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <h2 className="text-slate-900 font-extrabold text-xl text-center leading-snug mb-3">
-              반갑습니다!<br />임장메이트 PRO의<br />승인을 기다리고 있습니다.
+              반갑습니다!<br />소장노트 PRO의<br />승인을 기다리고 있습니다.
             </h2>
             <p className="text-slate-500 text-sm text-center leading-relaxed mb-6">
               입금 확인 후 최대 <span className="text-blue-600 font-bold">1시간 이내</span>에 승인됩니다.<br />
@@ -191,7 +191,7 @@ export default function LoginPage() {
               <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
             </svg>
           </div>
-          <span className="font-bold text-white text-base tracking-tight">임장메이트 <span className="text-blue-400">PRO</span></span>
+          <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
         </div>
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
           <div className="h-1.5 bg-gradient-to-r from-red-500 to-orange-500" />
@@ -234,7 +234,7 @@ export default function LoginPage() {
               <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
             </svg>
           </div>
-          <span className="font-bold text-white text-base tracking-tight">임장메이트 <span className="text-blue-400">PRO</span></span>
+          <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
         </div>
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
           <div className="h-1.5 bg-gradient-to-r from-amber-400 to-orange-500" />
@@ -291,7 +291,7 @@ export default function LoginPage() {
                 <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
               </svg>
             </div>
-            <span className="font-bold text-lg tracking-tight">임장메이트 <span className="text-blue-400">PRO</span></span>
+            <span className="font-bold text-lg tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-blue-300/70 border border-blue-700/50 bg-blue-900/20 rounded-full px-3 py-1">
@@ -369,7 +369,7 @@ export default function LoginPage() {
                   <path d="M9 22v-4h6v4"/>
                   <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
                 </svg>
-                임장메이트 PRO 시작하기
+                소장노트 PRO 시작하기
               </button>
             ) : null}
 
@@ -390,7 +390,7 @@ export default function LoginPage() {
                     {/* 앱 헤더 */}
                     <div className="flex items-center justify-between py-2">
                       <div>
-                        <p className="text-white font-bold text-sm">임장메이트 PRO</p>
+                        <p className="text-white font-bold text-sm">소장노트 PRO</p>
                         <p className="text-blue-400 text-[10px]">오늘 임장 매물 현황</p>
                       </div>
                       <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
@@ -520,7 +520,7 @@ export default function LoginPage() {
                     <line x1="12" y1="18" x2="12.01" y2="18"/>
                   </svg>
                 </div>
-                <h3 className="text-xl font-extrabold text-slate-800 mb-3">임장메이트 PRO</h3>
+                <h3 className="text-xl font-extrabold text-slate-800 mb-3">소장노트 PRO</h3>
               </div>
               <ul className="space-y-3">
                 {[
@@ -722,7 +722,7 @@ export default function LoginPage() {
               <div className="text-slate-500 text-xs mt-2">VS</div>
             </div>
 
-            {/* 임장메이트 쪽 (무거움 = 가치 있음) */}
+            {/* 소장노트 쪽 (무거움 = 가치 있음) */}
             <div className="flex flex-col items-center gap-4">
               <div className="bg-gradient-to-br from-blue-600/30 to-blue-800/30 border-2 border-blue-500/60 rounded-3xl p-6 sm:p-8 w-32 sm:w-44 flex flex-col items-center gap-3 shadow-2xl shadow-blue-900/50">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-400 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-700/50">
@@ -733,7 +733,7 @@ export default function LoginPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-white font-black text-sm sm:text-base text-center">임장메이트 PRO</p>
+                  <p className="text-white font-black text-sm sm:text-base text-center">소장노트 PRO</p>
                   <p className="text-amber-400 font-bold text-center mt-1">연 55,000원</p>
                   <p className="text-slate-400 text-[10px] text-center">= 하루 150원</p>
                 </div>
@@ -768,7 +768,7 @@ export default function LoginPage() {
           <div className="text-center mb-10">
             <p className="text-amber-400 text-xs font-bold tracking-[0.2em] uppercase mb-3">서비스 신청</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-3">
-              임장메이트 PRO<br />서비스 신청서
+              소장노트 PRO<br />서비스 신청서
             </h2>
             <p className="text-slate-400 text-base leading-relaxed">
               아래 정보를 입력하시면 입금 확인 후 최대{' '}
@@ -792,7 +792,7 @@ export default function LoginPage() {
                   <path d="M9 22v-4h6v4"/>
                 </svg>
               </div>
-              <span className="text-white font-bold text-sm">임장메이트 <span className="text-blue-400">PRO</span></span>
+              <span className="text-white font-bold text-sm">소장노트 <span className="text-blue-400">PRO</span></span>
               <span className="text-slate-600 text-xs ml-2">v2.0 · Copyright 2026</span>
             </div>
             <div className="flex items-center gap-4 text-xs text-slate-500">

@@ -40,7 +40,7 @@ export default function PendingPage() {
             <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
           </svg>
         </div>
-        <span className="font-bold text-white text-base tracking-tight">임장메이트 <span className="text-blue-400">PRO</span></span>
+        <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
       </div>
 
       {/* 카드 */}
@@ -58,7 +58,7 @@ export default function PendingPage() {
 
           {/* 메인 카피 */}
           <h2 className="text-slate-900 font-extrabold text-xl text-center leading-snug mb-3">
-            반갑습니다!<br />임장메이트 PRO의<br />승인을 기다리고 있습니다.
+            반갑습니다!<br />소장노트 PRO의<br />승인을 기다리고 있습니다.
           </h2>
 
           {/* 서브 카피 */}

@@ -135,7 +135,7 @@ export default function SettingsPage() {
           <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold">[이용약관]</a>
           에 동의한 것으로 간주합니다.
         </p>
-        <p className="text-[11px] text-slate-300 mt-2">임장메이트 PRO v2.0 · Copyright 2026. 임장메이트.</p>
+        <p className="text-[11px] text-slate-300 mt-2">소장노트 PRO v2.0 · Copyright 2026. 소장노트.</p>
       </div>
     </div>
   );
