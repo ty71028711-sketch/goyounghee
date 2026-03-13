@@ -179,6 +179,45 @@ export default function AdminPage() {
     }
   }
 
+  async function handleTrialFromApp(app: ApplicationForm) {
+    const matchedUser = users.find(u => u.email === app.googleEmail);
+    if (!matchedUser) {
+      alert(`사용자 계정을 찾을 수 없습니다.\n이메일 "${app.googleEmail}"로 등록된 사용자가 없습니다.\n먼저 회원 가입이 필요합니다.`);
+      return;
+    }
+    const key = `appTrial_${app.id}`;
+    setBusy(b => ({ ...b, [key]: true }));
+    try {
+      await startFreeTrial(matchedUser.uid);
+      await updateApplicationStatus(app.id, '처리완료');
+    } catch (err: unknown) {
+      const msg = (err as { message?: string }).message ?? String(err);
+      console.error('[admin] 신청서 무료체험 전환 실패:', err);
+      alert(`무료체험 전환에 실패했습니다.\n${msg}`);
+    } finally {
+      setBusy(b => ({ ...b, [key]: false }));
+    }
+  }
+
+  async function handleDeleteFromApp(app: ApplicationForm) {
+    if (!confirm('이 신청을 삭제 처리하시겠습니까?')) return;
+    const matchedUser = users.find(u => u.email === app.googleEmail);
+    const key = `appDel_${app.id}`;
+    setBusy(b => ({ ...b, [key]: true }));
+    try {
+      if (matchedUser) {
+        await softDeleteUser(matchedUser.uid, 'admin_deleted_from_application');
+      }
+      await updateApplicationStatus(app.id, '처리완료');
+    } catch (err: unknown) {
+      const msg = (err as { message?: string }).message ?? String(err);
+      console.error('[admin] 신청서 삭제 처리 실패:', err);
+      alert(`삭제 처리에 실패했습니다.\n${msg}`);
+    } finally {
+      setBusy(b => ({ ...b, [key]: false }));
+    }
+  }
+
   const pendingCount = users.filter(u => u.status === 'pending' || u.status === 'rejected').length;
   const counts = {
     active:  users.filter(u => u.status === 'approved' && isActivePlan(u)).length,
@@ -293,7 +332,7 @@ export default function AdminPage() {
             onClick={() => setMainTab('applications')}
             className="relative px-5 py-2.5 rounded-xl text-sm font-bold border transition-all text-amber-400 bg-amber-400/10 border-amber-400/30 data-[active=true]:bg-amber-500 data-[active=true]:text-white data-[active=true]:border-amber-500"
           >
-            📋 신청 목록 ({applications.length})
+            📋 신청 목록 ({appNew})
             {appNew > 0 && (
               <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full text-[10px] font-black text-white flex items-center justify-center">
                 {appNew}
@@ -520,21 +559,16 @@ export default function AdminPage() {
         {/* ── 신청 목록 뷰 ── */}
         {mainTab === 'applications' && (
           <div className="space-y-3">
-            {applications.length === 0 && (
+            {appNew === 0 && (
               <div className="text-center py-20 text-slate-500">
                 <p className="text-4xl mb-3">📋</p>
-                <p>아직 신청서가 없습니다</p>
+                <p>처리 대기 중인 신청서가 없습니다</p>
               </div>
             )}
 
-            {applications.map(app => (
+            {applications.filter(a => a.status === '신청완료').map(app => (
               <div key={app.id}
-                className={cn(
-                  'bg-[#0d1426] border rounded-2xl p-5 transition-colors',
-                  app.status === '신청완료'
-                    ? 'border-amber-500/40 hover:border-amber-400/60'
-                    : 'border-blue-900/30 opacity-60 hover:opacity-80'
-                )}
+                className="bg-[#0d1426] border border-amber-500/40 hover:border-amber-400/60 rounded-2xl p-5 transition-colors"
               >
                 <div className="flex items-start gap-4">
                   {/* 아이콘 */}
@@ -595,23 +629,20 @@ export default function AdminPage() {
 
                   {/* 액션 버튼 */}
                   <div className="flex flex-col gap-2 flex-shrink-0">
-                    {app.status === '신청완료' ? (
-                      <button
-                        disabled={busy[`app_${app.id}`]}
-                        onClick={() => handleAppStatus(app.id, '처리완료')}
-                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap"
-                      >
-                        {busy[`app_${app.id}`] ? '...' : '✓ 처리완료'}
-                      </button>
-                    ) : (
-                      <button
-                        disabled={busy[`app_${app.id}`]}
-                        onClick={() => handleAppStatus(app.id, '신청완료')}
-                        className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 disabled:opacity-40 text-slate-400 text-xs font-bold rounded-xl border border-slate-600/40 transition-colors whitespace-nowrap"
-                      >
-                        {busy[`app_${app.id}`] ? '...' : '↩ 되돌리기'}
-                      </button>
-                    )}
+                    <button
+                      disabled={busy[`appTrial_${app.id}`]}
+                      onClick={() => handleTrialFromApp(app)}
+                      className="px-4 py-2 bg-purple-700 hover:bg-purple-600 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap"
+                    >
+                      {busy[`appTrial_${app.id}`] ? '...' : '🎁 7일 체험'}
+                    </button>
+                    <button
+                      disabled={busy[`appDel_${app.id}`]}
+                      onClick={() => handleDeleteFromApp(app)}
+                      className="px-4 py-2 bg-[#1a2035] hover:bg-slate-700 disabled:opacity-40 text-slate-500 hover:text-slate-300 text-xs font-bold rounded-xl border border-slate-700/40 transition-colors whitespace-nowrap"
+                    >
+                      {busy[`appDel_${app.id}`] ? '...' : '🗑 삭제'}
+                    </button>
                   </div>
                 </div>
               </div>

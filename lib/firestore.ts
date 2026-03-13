@@ -67,7 +67,7 @@ export async function hardDeleteUser(uid: string): Promise<void> {
 export async function resetToPending(uid: string): Promise<void> {
   await updateDoc(doc(db, 'users', uid), {
     status:     'pending',
-    planStatus: '승인대기',
+    planStatus: 'inactive',
     planType:   null,
     approvedAt: null,
     expiryDate: null,

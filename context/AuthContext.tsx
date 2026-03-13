@@ -9,6 +9,7 @@ import {
 } from '@/lib/firestore';
 import { getDeviceId, getDeviceType, getDeviceName } from '@/lib/deviceFingerprint';
 import { AppUser } from '@/types';
+import { canAccess } from '@/lib/utils';
 
 interface AuthContextValue {
   firebaseUser:    User | null;
@@ -178,9 +179,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // ── 슈퍼어드민 자동 승인 ──
-      if (isSuperAdmin && (aUser.status !== 'approved' || aUser.planStatus !== '사용중')) {
+      if (isSuperAdmin && !canAccess(aUser)) {
         await withTimeout(updateUserStatus(user.uid, 'approved', true), 5_000);
-        aUser = { ...aUser, status: 'approved', planStatus: '사용중', expiryDate: null };
+        aUser = { ...aUser, status: 'approved', planStatus: 'active', expiryDate: null };
       }
 
       // ── 거부된 계정 ──
@@ -191,14 +192,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // ── 만료 / 미활성 체크 (슈퍼어드민 제외) ──
-      if (!isSuperAdmin && aUser.status === 'approved') {
-        const isExpired   = aUser.expiryDate != null && aUser.expiryDate < Date.now();
-        const isNotActive = !aUser.planStatus || aUser.planStatus !== '사용중';
-        if (isExpired || isNotActive) {
-          setExpiryError('서비스 이용 기간이 만료되었습니다.\n연장 문의 부탁드립니다.');
-          setAppUser(aUser);
-          return;
-        }
+      if (!isSuperAdmin && aUser.status === 'approved' && !canAccess(aUser)) {
+        setExpiryError('서비스 이용 기간이 만료되었습니다.\n연장 문의 부탁드립니다.');
+        setAppUser(aUser);
+        return;
       }
 
       // ── PENDING 유저: 승인 대기 실시간 구독 ──
@@ -207,7 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userDocUnsubRef.current = subscribeUserDoc(user.uid, (updated) => {
           if (!updated) return;
           if (updated.status === 'rejected') { signOut(auth); return; }
-          if (updated.status === 'approved' && updated.planStatus === '사용중') {
+          if (canAccess(updated)) {
             window.location.reload();
             return;
           }
@@ -224,9 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userDocUnsubRef.current = subscribeUserDoc(user.uid, (updated) => {
         if (!updated) return;
         if (updated.status === 'rejected') { signOut(auth); return; }
-        const isExpired   = updated.expiryDate != null && updated.expiryDate < Date.now();
-        const isNotActive = !updated.planStatus || updated.planStatus !== '사용중';
-        if (!isSuperAdmin && (isExpired || isNotActive)) {
+        if (!isSuperAdmin && updated.status === 'approved' && !canAccess(updated)) {
           setExpiryError('서비스 이용 기간이 만료되었습니다.\n연장 문의 부탁드립니다.');
         }
         setAppUser(updated);
@@ -299,7 +294,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userDocUnsubRef.current = subscribeUserDoc(user.uid, (updated) => {
         if (!updated) return;
         if (updated.status === 'rejected') { signOut(auth); return; }
-        if (updated.status === 'approved' && updated.planStatus === '사용중') {
+        if (canAccess(updated)) {
           window.location.reload();
           return;
         }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ApplicationForm from '@/components/ApplicationForm';
+import { canAccess } from '@/lib/utils';
 
 export default function LoginPage() {
   const { firebaseUser, appUser, loading, deviceError, expiryError, loginError,
@@ -17,7 +18,7 @@ export default function LoginPage() {
   // ── approved 유저 자동 리다이렉트 ──
   useEffect(() => {
     if (loading) return;
-    if (firebaseUser && appUser?.status === 'approved' && appUser?.planStatus === '사용중' && !deviceError && !expiryError) {
+    if (firebaseUser && appUser && canAccess(appUser) && !deviceError && !expiryError) {
       router.replace('/dashboard');
     }
   }, [loading, firebaseUser, appUser, deviceError, expiryError, router]);
