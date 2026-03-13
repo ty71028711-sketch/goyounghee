@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/auth/AuthContext';
 import { subscribeAllUsers, revokeDevice } from '@/auth/userStore';
 import {
-  subscribeApplications,
+  subscribeApplications, updateApplicationStatus,
   adminStartTrial, adminApproveAnnual, adminArchiveUser, adminHardDeleteUser,
 } from '@/lib/firestore';
 import { AppUser, ApplicationForm } from '@/types';
@@ -62,41 +62,21 @@ export default function AdminPage() {
 
   /* ─── 신청관리 핸들러 ─── */
 
-  async function handleStartTrial(uid: string) {
-    const key = `trial_${uid}`;
-    setBusy(b => ({ ...b, [key]: true }));
-    try {
-      await adminStartTrial(uid);
-    } catch (e) {
-      console.error('[Admin] 체험 승인 오류:', e);
-      alert(`승인 처리 중 오류가 발생했습니다.\n${e instanceof Error ? e.message : String(e)}`);
-    } finally {
-      setBusy(b => ({ ...b, [key]: false }));
+  async function handleApproveTrial(app: ApplicationForm) {
+    const key = `trial_${app.id}`;
+    // googleEmail로 users 배열에서 매칭 (메모리 탐색, 추가 Firestore 읽기 없음)
+    const matched = users.find(u => u.email.toLowerCase() === app.googleEmail.toLowerCase());
+    if (!matched) {
+      alert('해당 구글 계정으로 아직 로그인하지 않은 사용자입니다.\n먼저 Google 로그인 후 다시 시도해주세요.');
+      return;
     }
-  }
-
-  async function handleApproveAnnual(uid: string) {
-    const key = `annual_${uid}`;
     setBusy(b => ({ ...b, [key]: true }));
     try {
-      await adminApproveAnnual(uid);
+      await adminStartTrial(matched.uid);
+      await updateApplicationStatus(app.id, '처리완료');
     } catch (e) {
-      console.error('[Admin] 연간 승인 오류:', e);
+      console.error('[Admin] 7일 체험 승인 오류:', e);
       alert(`승인 처리 중 오류가 발생했습니다.\n${e instanceof Error ? e.message : String(e)}`);
-    } finally {
-      setBusy(b => ({ ...b, [key]: false }));
-    }
-  }
-
-  async function handleArchivePending(uid: string) {
-    if (!confirm('이 신청자를 보관함으로 이동하시겠습니까?')) return;
-    const key = `archivepending_${uid}`;
-    setBusy(b => ({ ...b, [key]: true }));
-    try {
-      await adminArchiveUser(uid);
-    } catch (e) {
-      console.error('[Admin] 신청자 보관함 이동 오류:', e);
-      alert(`처리 중 오류가 발생했습니다.\n${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setBusy(b => ({ ...b, [key]: false }));
     }
@@ -320,10 +300,11 @@ export default function AdminPage() {
                   </div>
                   <div className="flex flex-col gap-2 flex-shrink-0">
                     <button
-                      disabled
-                      className="px-4 py-2 bg-purple-700 opacity-40 text-white text-xs font-bold rounded-xl whitespace-nowrap cursor-not-allowed"
+                      disabled={busy[`trial_${app.id}`]}
+                      onClick={() => handleApproveTrial(app)}
+                      className="px-4 py-2 bg-purple-700 hover:bg-purple-600 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap"
                     >
-                      🎁 7일 체험
+                      {busy[`trial_${app.id}`] ? '...' : '🎁 7일 체험'}
                     </button>
                     <button
                       disabled
