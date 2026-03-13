@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/auth/AuthContext';
 import ApplicationForm from '@/components/ApplicationForm';
+import { canAccess } from '@/lib/utils';
 
 export default function LandingPage() {
   const { firebaseUser, appUser, loading, deviceError, expiryError, loginError,
@@ -15,6 +16,7 @@ export default function LandingPage() {
   const [signupPhone,   setSignupPhone]   = useState('');
   const [signupLoading, setSignupLoading] = useState(false);
 
+<<<<<<< HEAD
   // 3초 안전 타임아웃 — loading이 지연돼도 무한스피너 방지
   useEffect(() => {
     const t = setTimeout(() => setLocalTimeout(true), 3_000);
@@ -55,6 +57,15 @@ export default function LandingPage() {
       console.log('[LANDING-ROUTE] 조건 없음 → 랜딩 표시');
     }
   }, [loading, localTimeout, appUser, deviceError, expiryError, firebaseUser, router]);
+=======
+  // ── approved 유저 자동 리다이렉트 ──
+  useEffect(() => {
+    if (loading) return;
+    if (firebaseUser && appUser && canAccess(appUser) && !deviceError && !expiryError) {
+      router.replace('/dashboard');
+    }
+  }, [loading, firebaseUser, appUser, deviceError, expiryError, router]);
+>>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c
 
   async function handleSignupSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,7 +86,7 @@ export default function LandingPage() {
             <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
           </svg>
         </div>
-        <p className="text-white font-bold text-lg tracking-tight">임장메이트 <span className="text-amber-400">PRO</span></p>
+        <p className="text-white font-bold text-lg tracking-tight">소장노트 <span className="text-amber-400">PRO</span></p>
         <div className="flex items-center gap-1.5">
           {[0, 150, 300].map(delay => (
             <div key={delay} className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
@@ -101,7 +112,7 @@ export default function LandingPage() {
               <path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
             </svg>
           </div>
-          <span className="font-bold text-white text-base tracking-tight">임장메이트 <span className="text-blue-400">PRO</span></span>
+          <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
         </div>
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
           <div className="h-1.5 bg-gradient-to-r from-blue-500 to-blue-700" />
@@ -150,6 +161,69 @@ export default function LandingPage() {
     );
   }
 
+<<<<<<< HEAD
+=======
+  // ── 승인 대기 안내 페이지 ──
+  if (firebaseUser && appUser && appUser.status !== 'approved' && !deviceError && !expiryError) {
+    return (
+      <div className="min-h-screen bg-[#050d1f] flex flex-col items-center justify-center px-6 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-blue-600/15 rounded-full blur-[120px]" />
+          <div className="absolute bottom-0 right-0 w-72 h-72 bg-indigo-600/10 rounded-full blur-[100px]" />
+        </div>
+        <div className="relative z-10 flex items-center gap-2 mb-8">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-700 rounded-xl flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <path d="M9 22v-4h6v4"/>
+              <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
+            </svg>
+          </div>
+          <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
+        </div>
+        <div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
+          <div className="h-1.5 bg-gradient-to-r from-blue-500 to-blue-700" />
+          <div className="px-8 py-9">
+            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <h2 className="text-slate-900 font-extrabold text-xl text-center leading-snug mb-3">
+              반갑습니다!<br />소장노트 PRO의<br />승인을 기다리고 있습니다.
+            </h2>
+            <p className="text-slate-500 text-sm text-center leading-relaxed mb-6">
+              입금 확인 후 최대 <span className="text-blue-600 font-bold">1시간 이내</span>에 승인됩니다.<br />
+              빠른 승인을 원하시면 아래 버튼을 눌러주세요.
+            </p>
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 flex items-center gap-3 mb-6">
+              {firebaseUser.photoURL
+                ? <img src={firebaseUser.photoURL} alt="" className="w-10 h-10 rounded-full flex-shrink-0" />
+                : <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-lg flex-shrink-0">👤</div>
+              }
+              <div className="min-w-0">
+                <p className="text-slate-800 font-bold text-sm truncate">{firebaseUser.displayName}</p>
+                <p className="text-slate-400 text-xs truncate">{firebaseUser.email}</p>
+              </div>
+            </div>
+            <a href="http://pf.kakao.com/_LDfqX/chat" target="_blank" rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 bg-[#FEE500] hover:bg-[#f5dc00] active:scale-[.98] text-[#3A1D1D] font-bold text-sm py-3.5 rounded-2xl transition-all shadow-md shadow-yellow-200 mb-3">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3A1D1D">
+                <path d="M12 3C6.48 3 2 6.69 2 11.25c0 2.91 1.72 5.48 4.35 7.02l-.87 3.19a.5.5 0 0 0 .74.57l3.73-2.15c.64.09 1.3.14 1.97.14 5.52 0 10-3.69 10-8.25S17.52 3 12 3z"/>
+              </svg>
+              카카오로 빠른 승인 문의
+            </a>
+            <button onClick={logout} className="w-full py-3 text-slate-400 hover:text-slate-600 text-sm font-semibold rounded-2xl hover:bg-slate-50 transition-colors">
+              다른 계정으로 로그인
+            </button>
+          </div>
+        </div>
+        <p className="relative z-10 mt-6 text-blue-900/60 text-xs">승인 완료 시 자동으로 서비스가 시작됩니다</p>
+      </div>
+    );
+  }
+
+>>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c
   // ── 기기 제한 오류 화면 ──
   if (firebaseUser && appUser && deviceError) {
     return (
@@ -165,7 +239,7 @@ export default function LandingPage() {
               <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
             </svg>
           </div>
-          <span className="font-bold text-white text-base tracking-tight">임장메이트 <span className="text-blue-400">PRO</span></span>
+          <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
         </div>
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
           <div className="h-1.5 bg-gradient-to-r from-red-500 to-orange-500" />
@@ -193,6 +267,52 @@ export default function LandingPage() {
     );
   }
 
+<<<<<<< HEAD
+=======
+  // ── 서비스 만료 오류 화면 ──
+  if (firebaseUser && appUser && expiryError) {
+    return (
+      <div className="min-h-screen bg-[#050d1f] flex flex-col items-center justify-center px-6 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-[120px]" />
+        </div>
+        <div className="relative z-10 flex items-center gap-2 mb-8">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-700 rounded-xl flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <path d="M9 22v-4h6v4"/>
+              <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
+            </svg>
+          </div>
+          <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
+        </div>
+        <div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
+          <div className="h-1.5 bg-gradient-to-r from-amber-400 to-orange-500" />
+          <div className="px-8 py-9 text-center">
+            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <h2 className="text-slate-900 font-extrabold text-xl leading-snug mb-3">이용 기간 만료</h2>
+            <p className="text-slate-500 text-sm leading-relaxed mb-6 whitespace-pre-line">{expiryError}</p>
+            <a href="http://pf.kakao.com/_LDfqX/chat" target="_blank" rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 bg-[#FEE500] hover:bg-[#f5dc00] active:scale-[.98] text-[#3A1D1D] font-bold text-sm py-3.5 rounded-2xl transition-all shadow-md shadow-yellow-200 mb-3">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3A1D1D">
+                <path d="M12 3C6.48 3 2 6.69 2 11.25c0 2.91 1.72 5.48 4.35 7.02l-.87 3.19a.5.5 0 0 0 .74.57l3.73-2.15c.64.09 1.3.14 1.97.14 5.52 0 10-3.69 10-8.25S17.52 3 12 3z"/>
+              </svg>
+              카카오로 연장 문의
+            </a>
+            <button onClick={logout} className="w-full py-3 text-slate-400 hover:text-slate-600 text-sm font-semibold rounded-2xl hover:bg-slate-50 transition-colors">
+              다른 계정으로 로그인
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+>>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c
   // ────────────────────────────────────────────────────
   // 메인 랜딩 페이지 (비로그인 사용자 대상)
   // ────────────────────────────────────────────────────
@@ -222,7 +342,7 @@ export default function LandingPage() {
                 <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
               </svg>
             </div>
-            <span className="font-bold text-lg tracking-tight">임장메이트 <span className="text-blue-400">PRO</span></span>
+            <span className="font-bold text-lg tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-blue-300/70 border border-blue-700/50 bg-blue-900/20 rounded-full px-3 py-1">
@@ -300,7 +420,7 @@ export default function LandingPage() {
                   <path d="M9 22v-4h6v4"/>
                   <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
                 </svg>
-                임장메이트 PRO 시작하기
+                소장노트 PRO 시작하기
               </button>
             ) : null}
 
@@ -321,7 +441,7 @@ export default function LandingPage() {
                     {/* 앱 헤더 */}
                     <div className="flex items-center justify-between py-2">
                       <div>
-                        <p className="text-white font-bold text-sm">임장메이트 PRO</p>
+                        <p className="text-white font-bold text-sm">소장노트 PRO</p>
                         <p className="text-blue-400 text-[10px]">오늘 임장 매물 현황</p>
                       </div>
                       <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
@@ -451,7 +571,7 @@ export default function LandingPage() {
                     <line x1="12" y1="18" x2="12.01" y2="18"/>
                   </svg>
                 </div>
-                <h3 className="text-xl font-extrabold text-slate-800 mb-3">임장메이트 PRO</h3>
+                <h3 className="text-xl font-extrabold text-slate-800 mb-3">소장노트 PRO</h3>
               </div>
               <ul className="space-y-3">
                 {[
@@ -653,7 +773,7 @@ export default function LandingPage() {
               <div className="text-slate-500 text-xs mt-2">VS</div>
             </div>
 
-            {/* 임장메이트 쪽 (무거움 = 가치 있음) */}
+            {/* 소장노트 쪽 (무거움 = 가치 있음) */}
             <div className="flex flex-col items-center gap-4">
               <div className="bg-gradient-to-br from-blue-600/30 to-blue-800/30 border-2 border-blue-500/60 rounded-3xl p-6 sm:p-8 w-32 sm:w-44 flex flex-col items-center gap-3 shadow-2xl shadow-blue-900/50">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-400 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-700/50">
@@ -664,7 +784,7 @@ export default function LandingPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-white font-black text-sm sm:text-base text-center">임장메이트 PRO</p>
+                  <p className="text-white font-black text-sm sm:text-base text-center">소장노트 PRO</p>
                   <p className="text-amber-400 font-bold text-center mt-1">연 55,000원</p>
                   <p className="text-slate-400 text-[10px] text-center">= 하루 150원</p>
                 </div>
@@ -699,7 +819,7 @@ export default function LandingPage() {
           <div className="text-center mb-10">
             <p className="text-amber-400 text-xs font-bold tracking-[0.2em] uppercase mb-3">서비스 신청</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-3">
-              임장메이트 PRO<br />서비스 신청서
+              소장노트 PRO<br />서비스 신청서
             </h2>
             <p className="text-slate-400 text-base leading-relaxed">
               아래 정보를 입력하시면 입금 확인 후 최대{' '}
@@ -723,7 +843,7 @@ export default function LandingPage() {
                   <path d="M9 22v-4h6v4"/>
                 </svg>
               </div>
-              <span className="text-white font-bold text-sm">임장메이트 <span className="text-blue-400">PRO</span></span>
+              <span className="text-white font-bold text-sm">소장노트 <span className="text-blue-400">PRO</span></span>
               <span className="text-slate-600 text-xs ml-2">v2.0 · Copyright 2026</span>
             </div>
             <div className="flex items-center gap-4 text-xs text-slate-500">

@@ -35,8 +35,15 @@ export default function SettingsPage() {
   async function handleRevokeDevice(deviceId: string) {
     if (!appUser) return;
     if (!confirm('이 기기를 해제하시겠습니까?\n해제된 기기는 다시 로그인해야 합니다.')) return;
-    await revokeDevice(appUser.uid, deviceId);
-    if (deviceId === myDeviceId) await logout();
+    try {
+      await revokeDevice(appUser.uid, deviceId);
+      if (deviceId === myDeviceId) await logout();
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? 'unknown';
+      const msg  = (err as { message?: string }).message ?? String(err);
+      console.error('[revokeDevice] 실패 — code:', code, 'message:', msg);
+      alert(`기기 해제에 실패했습니다.\n오류: ${code}\n${msg}`);
+    }
   }
 
   return (
@@ -135,7 +142,7 @@ export default function SettingsPage() {
           <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold">[이용약관]</a>
           에 동의한 것으로 간주합니다.
         </p>
-        <p className="text-[11px] text-slate-300 mt-2">임장메이트 PRO v2.0 · Copyright 2026. 임장메이트.</p>
+        <p className="text-[11px] text-slate-300 mt-2">소장노트 PRO v2.0 · Copyright 2026. 소장노트.</p>
       </div>
     </div>
   );

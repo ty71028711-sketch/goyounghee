@@ -4,8 +4,9 @@ export type Category         = 'apt' | 'sale' | 'house';
 export type DealType         = 'sale' | 'rental' | 'saleRight' | 'saleRightRental';
 export type RentalType       = 'jeonse' | 'monthly';
 export type AppointmentStatus = '가능' | '확인중' | '방문완료' | '불가';
-export type UserStatus       = 'pending' | 'approved' | 'rejected';
-export type PlanStatus       = '승인대기' | '사용중' | '만료';
+export type UserStatus       = 'pending' | 'approved' | 'rejected' | 'deleted';
+export type PlanStatus       = 'active' | 'trial' | 'expired' | 'inactive'
+                             | '승인대기' | '사용중' | '만료' | '무료체험'; // legacy Korean
 export type DeviceType       = 'pc' | 'mobile';
 
 export interface DeviceInfo {
@@ -28,8 +29,13 @@ export interface AppUser {
   planLabel?:  string;
   createdAt:   number;
   approvedAt?: number;
-  expiryDate?: number | null;
-  devices:     DeviceInfo[];
+  expiryDate?:    number | null;
+  planType?:      'trial' | 'paid' | null;
+  trialStartAt?:  number | null;
+  deletedAt?:     number | null;
+  deletedReason?: string | null;
+  reactivatedAt?: number | null;
+  devices:        DeviceInfo[];
 }
 
 export interface Visit {

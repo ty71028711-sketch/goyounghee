@@ -1,8 +1,13 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
+<<<<<<< HEAD:auth/AuthContext.tsx
 import { User, onAuthStateChanged, signInWithRedirect, signInWithPopup, getRedirectResult, signOut } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
+=======
+import { User, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase';
+>>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c:context/AuthContext.tsx
 import {
   getAppUser, createAppUser, registerDevice, getDevices,
   subscribeUserDoc, updateUserStatus,
@@ -10,6 +15,7 @@ import {
 import { getDeviceId, getDeviceType, getDeviceName } from './deviceFingerprint';
 import { getPreApproval, deletePreApproval } from '@/lib/firestore';
 import { AppUser } from '@/types';
+import { canAccess } from '@/lib/utils';
 
 interface AuthContextValue {
   firebaseUser:    User | null;
@@ -264,9 +270,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // ── 슈퍼어드민 자동 승인 ──
-      if (isSuperAdmin && (aUser.status !== 'approved' || aUser.planStatus !== '사용중')) {
+      if (isSuperAdmin && !canAccess(aUser)) {
         await withTimeout(updateUserStatus(user.uid, 'approved', true), 5_000);
-        aUser = { ...aUser, status: 'approved', planStatus: '사용중', expiryDate: null };
+        aUser = { ...aUser, status: 'approved', planStatus: 'active', expiryDate: null };
       }
 
       // ── 거부된 계정 ──
@@ -277,6 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // ── 만료 / 미활성 체크 (슈퍼어드민 제외) ──
+<<<<<<< HEAD:auth/AuthContext.tsx
       if (!isSuperAdmin && aUser.status === 'approved') {
         const isExpired = aUser.expiryDate != null && aUser.expiryDate < Date.now();
         // planStatus 필드 자체가 없는(undefined) 경우는 데이터 마이그레이션 문제이므로
@@ -287,6 +294,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setAppUser(aUser);
           return;
         }
+=======
+      if (!isSuperAdmin && aUser.status === 'approved' && !canAccess(aUser)) {
+        setExpiryError('서비스 이용 기간이 만료되었습니다.\n연장 문의 부탁드립니다.');
+        setAppUser(aUser);
+        return;
+>>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c:context/AuthContext.tsx
       }
 
       // ── PENDING 유저: 승인 대기 실시간 구독 ──
@@ -295,7 +308,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userDocUnsubRef.current = subscribeUserDoc(user.uid, (updated) => {
           if (!updated) return;
           if (updated.status === 'rejected') { signOut(auth); return; }
-          if (updated.status === 'approved' && updated.planStatus === '사용중') {
+          if (canAccess(updated)) {
             window.location.reload();
             return;
           }
@@ -314,9 +327,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userDocUnsubRef.current = subscribeUserDoc(user.uid, (updated) => {
         if (!updated) return;
         if (updated.status === 'rejected') { signOut(auth); return; }
+<<<<<<< HEAD:auth/AuthContext.tsx
         const isExpired   = updated.expiryDate != null && updated.expiryDate < Date.now();
         const isNotActive = updated.planStatus != null && updated.planStatus !== '사용중';
         if (!isSuperAdmin && (isExpired || isNotActive)) {
+=======
+        if (!isSuperAdmin && updated.status === 'approved' && !canAccess(updated)) {
+>>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c:context/AuthContext.tsx
           setExpiryError('서비스 이용 기간이 만료되었습니다.\n연장 문의 부탁드립니다.');
         }
         setAppUser(updated);
@@ -325,19 +342,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 슈퍼어드민은 기기 체크 생략
       if (isSuperAdmin) return;
 
-      // 백그라운드 기기 체크 (2초 타임아웃, 초과 시 통과)
+      // 백그라운드 기기 체크 (Firestore 최신 devices 읽기)
       (async () => {
         try {
           const deviceId   = getDeviceId();
           const deviceType = getDeviceType();
           const deviceName = getDeviceName();
 
-          const devices = await withTimeout(getDevices(user.uid), 2_000);
+          // 로그인 시점 스냅샷(aUser.devices)이 아닌 Firestore 최신값으로 체크
+          const devices  = await withTimeout(getDevices(user.uid), 5_000);
           const already  = devices.find(d => d.deviceId === deviceId);
           const sameType = devices.filter(d => d.deviceType === deviceType);
 
           if (!already && sameType.length >= 1) {
-            // 기기 제한 초과 → 팝업 표시 (사용자가 직접 로그아웃)
+            // 기기 제한 초과 (PC 1대 + 모바일 1대) → 팝업 표시
             setDeviceError(
               deviceType === 'pc'
                 ? 'PC 기기가 이미 1대 등록되어 있습니다.\n관리자에게 기기 교체를 요청하세요.'
@@ -346,17 +364,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
           }
 
-          // 기기 등록 (fire and forget)
+          // 기기 등록 (await로 완료 보장)
           const devicePayload = already
             ? { ...already, lastLogin: Date.now() }
             : { deviceId, deviceType, deviceName, lastLogin: Date.now(), registeredAt: Date.now() };
 
-          registerDevice(user.uid, devicePayload).catch(err =>
-            console.warn('[Auth] 기기 등록 실패:', err)
-          );
-        } catch {
-          // 2초 타임아웃 또는 기타 오류 → 네트워크 느림으로 간주, 통과
-          console.warn('[Auth] 기기 체크 타임아웃, 통과 처리');
+          await registerDevice(user.uid, devicePayload);
+        } catch (err) {
+          console.warn('[Auth] 기기 체크 오류:', err);
         }
       })();
 
@@ -391,7 +406,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userDocUnsubRef.current = subscribeUserDoc(user.uid, (updated) => {
         if (!updated) return;
         if (updated.status === 'rejected') { signOut(auth); return; }
-        if (updated.status === 'approved' && updated.planStatus === '사용중') {
+        if (canAccess(updated)) {
           window.location.reload();
           return;
         }
@@ -422,6 +437,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const useRedirect = mobile || process.env.NODE_ENV !== 'development';
 
     try {
+<<<<<<< HEAD:auth/AuthContext.tsx
       if (useRedirect) {
         console.log(`[AUTH-02] signInWithRedirect 시작 (mobile=${mobile})`);
         await signInWithRedirect(auth, googleProvider);
@@ -434,6 +450,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err: unknown) {
       console.error('[Auth] Google 로그인 시작 오류:', err);
       setLoginError('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+=======
+      await signInWithPopup(auth, googleProvider);
+    } catch (popupErr: unknown) {
+      const code = (popupErr as { code?: string }).code ?? 'unknown';
+      const msg  = (popupErr as { message?: string }).message ?? String(popupErr);
+      // 팝업 차단 또는 지원 불가 환경 → redirect fallback
+      if (
+        code === 'auth/popup-blocked' ||
+        code === 'auth/popup-closed-by-user' ||
+        code === 'auth/cancelled-popup-request'
+      ) {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (redirectErr: unknown) {
+          const rCode = (redirectErr as { code?: string }).code ?? 'unknown';
+          const rMsg  = (redirectErr as { message?: string }).message ?? String(redirectErr);
+          console.error('[Auth] Google 로그인(redirect) 오류 code:', rCode, 'message:', rMsg);
+          setLoginError(`[redirect] ${rCode}: ${rMsg}`);
+        }
+        return;
+      }
+      console.error('[Auth] Google 로그인(popup) 오류 code:', code, 'message:', msg);
+      setLoginError(`[popup] ${code}: ${msg}`);
+>>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c:context/AuthContext.tsx
     }
   }
 

@@ -3,7 +3,7 @@ import './globals.css';
 import { AuthProvider } from '@/auth/AuthContext';
 
 export const metadata: Metadata = {
-  title:       '임장메이트 PRO',
+  title:       '소장노트 PRO',
   description: '공인중개사 전용 매물 방문 관리 서비스',
   manifest:    '/manifest.json',
   icons:       { apple: '/icon.svg', icon: '/icon.svg' },

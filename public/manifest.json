@@ -1,6 +1,6 @@
 {
-  "name": "임장메이트 PRO",
-  "short_name": "임장PRO",
+  "name": "소장노트 PRO",
+  "short_name": "소장노트",
   "description": "공인중개사 전용 매물 방문 관리 서비스",
   "start_url": "/",
   "display": "standalone",

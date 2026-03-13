@@ -7,7 +7,6 @@ import { ReceiptType } from '@/types';
 type ApplyFormState = {
   name:          string;
   phone:         string;
-  officeName:    string;
   depositorName: string;
   googleEmail:   string;
   receiptType:   ReceiptType;
@@ -16,7 +15,7 @@ type ApplyFormState = {
 };
 
 const EMPTY: ApplyFormState = {
-  name: '', phone: '', officeName: '', depositorName: '', googleEmail: '',
+  name: '', phone: '', depositorName: '', googleEmail: '',
   receiptType: '없음', receiptInfo: '',
   plan: '1년권 - 55,000원 (VAT 포함)',
 };
@@ -59,7 +58,6 @@ export default function ApplicationForm() {
       await submitApplication({
         name:          form.name.trim(),
         phone:         form.phone.trim(),
-        officeName:    form.officeName.trim() || undefined,
         depositorName: form.depositorName.trim(),
         googleEmail:   form.googleEmail.trim(),
         receiptType:   form.receiptType,
@@ -233,7 +231,7 @@ export default function ApplicationForm() {
             문의:{' '}
             <a href="http://pf.kakao.com/_LDfqX/chat" target="_blank" rel="noopener noreferrer"
               className="text-amber-400 hover:underline font-bold">
-              카카오채널 임장메이트
+              카카오채널 소장노트
             </a>
           </p>
         </form>

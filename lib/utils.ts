@@ -1,6 +1,15 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { Visit } from '@/types';
+import { AppUser, Visit } from '@/types';
+
+/** 서비스 접근 가능 여부: status=approved AND planStatus=active|trial AND 유효기간 내 */
+export function canAccess(u: AppUser): boolean {
+  if (u.status !== 'approved') return false;
+  const activePlans = ['active', 'trial', '사용중', '무료체험'] as const;
+  if (!activePlans.includes(u.planStatus as typeof activePlans[number])) return false;
+  if (u.expiryDate != null && u.expiryDate < Date.now()) return false;
+  return true;
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
