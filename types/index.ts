@@ -35,6 +35,7 @@ export interface AppUser {
   deletedAt?:     number | null;
   deletedReason?: string | null;
   reactivatedAt?: number | null;
+  archivedAt?:    number | null;
   devices:        DeviceInfo[];
 }
 

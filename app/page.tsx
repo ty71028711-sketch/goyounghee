@@ -16,56 +16,23 @@ export default function LandingPage() {
   const [signupPhone,   setSignupPhone]   = useState('');
   const [signupLoading, setSignupLoading] = useState(false);
 
-<<<<<<< HEAD
   // 3초 안전 타임아웃 — loading이 지연돼도 무한스피너 방지
   useEffect(() => {
     const t = setTimeout(() => setLocalTimeout(true), 3_000);
     return () => clearTimeout(t);
   }, []);
 
-  // ── [진단] 상태 변화 추적 ──────────────────────────────────────
+  // 인증 상태에 따른 라우팅
   useEffect(() => {
-    console.log(
-      `[LANDING] 상태변화 | loading=${loading} | localTimeout=${localTimeout}` +
-      ` | firebaseUser=${firebaseUser?.uid ?? 'null'}` +
-      ` | appUser=${appUser ? `${appUser.status}/${appUser.planStatus}` : 'null'}` +
-      ` | deviceError=${deviceError ?? 'null'} | expiryError=${expiryError ?? 'null'}`
-    );
-  }, [loading, localTimeout, firebaseUser, appUser, deviceError, expiryError]);
-
-  // 인증 상태에 따른 라우팅: loading 완료(또는 3초 타임아웃) 후 처리
-  useEffect(() => {
-    if (loading && !localTimeout) {
-      console.log('[LANDING-ROUTE] 대기 중 (loading=true, localTimeout=false)');
-      return;
-    }
-    const status    = appUser?.status ?? 'null';
-    const plan      = appUser?.planStatus ?? 'null';
-    const uid       = firebaseUser?.uid ?? 'null';
-    console.log(`[LANDING-ROUTE] 판단 시작 | uid=${uid} | status=${status} | plan=${plan} | deviceError=${deviceError ?? 'null'} | expiryError=${expiryError ?? 'null'}`);
-
-    if (appUser?.status === 'approved' && appUser?.planStatus === '사용중' && !deviceError && !expiryError) {
-      console.log('[LANDING-ROUTE] → /dashboard');
-      router.replace('/dashboard');
-    } else if (firebaseUser && appUser && appUser.status !== 'approved' && !deviceError && !expiryError) {
-      console.log('[LANDING-ROUTE] → /pending');
-      router.replace('/pending');
-    } else if (firebaseUser && appUser && expiryError) {
-      console.log('[LANDING-ROUTE] → /expired');
-      router.replace('/expired');
-    } else {
-      console.log('[LANDING-ROUTE] 조건 없음 → 랜딩 표시');
-    }
-  }, [loading, localTimeout, appUser, deviceError, expiryError, firebaseUser, router]);
-=======
-  // ── approved 유저 자동 리다이렉트 ──
-  useEffect(() => {
-    if (loading) return;
+    if (loading && !localTimeout) return;
     if (firebaseUser && appUser && canAccess(appUser) && !deviceError && !expiryError) {
       router.replace('/dashboard');
+    } else if (firebaseUser && appUser && appUser.status !== 'approved' && !deviceError && !expiryError) {
+      router.replace('/pending');
+    } else if (firebaseUser && appUser && expiryError) {
+      router.replace('/expired');
     }
-  }, [loading, firebaseUser, appUser, deviceError, expiryError, router]);
->>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c
+  }, [loading, localTimeout, appUser, deviceError, expiryError, firebaseUser, router]);
 
   async function handleSignupSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -161,69 +128,8 @@ export default function LandingPage() {
     );
   }
 
-<<<<<<< HEAD
-=======
-  // ── 승인 대기 안내 페이지 ──
-  if (firebaseUser && appUser && appUser.status !== 'approved' && !deviceError && !expiryError) {
-    return (
-      <div className="min-h-screen bg-[#050d1f] flex flex-col items-center justify-center px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-blue-600/15 rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 right-0 w-72 h-72 bg-indigo-600/10 rounded-full blur-[100px]" />
-        </div>
-        <div className="relative z-10 flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-700 rounded-xl flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <rect x="4" y="2" width="16" height="20" rx="2"/>
-              <path d="M9 22v-4h6v4"/>
-              <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
-            </svg>
-          </div>
-          <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
-        </div>
-        <div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-blue-500 to-blue-700" />
-          <div className="px-8 py-9">
-            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-            </div>
-            <h2 className="text-slate-900 font-extrabold text-xl text-center leading-snug mb-3">
-              반갑습니다!<br />소장노트 PRO의<br />승인을 기다리고 있습니다.
-            </h2>
-            <p className="text-slate-500 text-sm text-center leading-relaxed mb-6">
-              입금 확인 후 최대 <span className="text-blue-600 font-bold">1시간 이내</span>에 승인됩니다.<br />
-              빠른 승인을 원하시면 아래 버튼을 눌러주세요.
-            </p>
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 flex items-center gap-3 mb-6">
-              {firebaseUser.photoURL
-                ? <img src={firebaseUser.photoURL} alt="" className="w-10 h-10 rounded-full flex-shrink-0" />
-                : <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-lg flex-shrink-0">👤</div>
-              }
-              <div className="min-w-0">
-                <p className="text-slate-800 font-bold text-sm truncate">{firebaseUser.displayName}</p>
-                <p className="text-slate-400 text-xs truncate">{firebaseUser.email}</p>
-              </div>
-            </div>
-            <a href="http://pf.kakao.com/_LDfqX/chat" target="_blank" rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 bg-[#FEE500] hover:bg-[#f5dc00] active:scale-[.98] text-[#3A1D1D] font-bold text-sm py-3.5 rounded-2xl transition-all shadow-md shadow-yellow-200 mb-3">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3A1D1D">
-                <path d="M12 3C6.48 3 2 6.69 2 11.25c0 2.91 1.72 5.48 4.35 7.02l-.87 3.19a.5.5 0 0 0 .74.57l3.73-2.15c.64.09 1.3.14 1.97.14 5.52 0 10-3.69 10-8.25S17.52 3 12 3z"/>
-              </svg>
-              카카오로 빠른 승인 문의
-            </a>
-            <button onClick={logout} className="w-full py-3 text-slate-400 hover:text-slate-600 text-sm font-semibold rounded-2xl hover:bg-slate-50 transition-colors">
-              다른 계정으로 로그인
-            </button>
-          </div>
-        </div>
-        <p className="relative z-10 mt-6 text-blue-900/60 text-xs">승인 완료 시 자동으로 서비스가 시작됩니다</p>
-      </div>
-    );
-  }
 
->>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c
+
   // ── 기기 제한 오류 화면 ──
   if (firebaseUser && appUser && deviceError) {
     return (
@@ -267,52 +173,8 @@ export default function LandingPage() {
     );
   }
 
-<<<<<<< HEAD
-=======
-  // ── 서비스 만료 오류 화면 ──
-  if (firebaseUser && appUser && expiryError) {
-    return (
-      <div className="min-h-screen bg-[#050d1f] flex flex-col items-center justify-center px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-[120px]" />
-        </div>
-        <div className="relative z-10 flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-700 rounded-xl flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <rect x="4" y="2" width="16" height="20" rx="2"/>
-              <path d="M9 22v-4h6v4"/>
-              <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
-            </svg>
-          </div>
-          <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
-        </div>
-        <div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-amber-400 to-orange-500" />
-          <div className="px-8 py-9 text-center">
-            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-            </div>
-            <h2 className="text-slate-900 font-extrabold text-xl leading-snug mb-3">이용 기간 만료</h2>
-            <p className="text-slate-500 text-sm leading-relaxed mb-6 whitespace-pre-line">{expiryError}</p>
-            <a href="http://pf.kakao.com/_LDfqX/chat" target="_blank" rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 bg-[#FEE500] hover:bg-[#f5dc00] active:scale-[.98] text-[#3A1D1D] font-bold text-sm py-3.5 rounded-2xl transition-all shadow-md shadow-yellow-200 mb-3">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3A1D1D">
-                <path d="M12 3C6.48 3 2 6.69 2 11.25c0 2.91 1.72 5.48 4.35 7.02l-.87 3.19a.5.5 0 0 0 .74.57l3.73-2.15c.64.09 1.3.14 1.97.14 5.52 0 10-3.69 10-8.25S17.52 3 12 3z"/>
-              </svg>
-              카카오로 연장 문의
-            </a>
-            <button onClick={logout} className="w-full py-3 text-slate-400 hover:text-slate-600 text-sm font-semibold rounded-2xl hover:bg-slate-50 transition-colors">
-              다른 계정으로 로그인
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
->>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c
+
   // ────────────────────────────────────────────────────
   // 메인 랜딩 페이지 (비로그인 사용자 대상)
   // ────────────────────────────────────────────────────

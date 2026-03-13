@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-<<<<<<< HEAD:core/DashboardApp.tsx
 import { useAuth } from '@/auth/AuthContext';
 import { useSessionVisits } from './hooks/useSessionVisits';
 import { useArchives } from './hooks/useArchives';
@@ -12,18 +11,6 @@ import SmsComposePage from '@/modules/sms/SmsComposePage';
 import SettingsPage from './pages/SettingsPage';
 import ArchivesPage from './pages/ArchivesPage';
 import IjangMapPage from '@/modules/map/IjangMapPage';
-=======
-import { useAuth } from '@/context/AuthContext';
-import { useSessionVisits } from '@/hooks/useSessionVisits';
-import { useArchives } from '@/hooks/useArchives';
-import { useBusinessCard } from '@/hooks/useBusinessCard';
-import PropertyCard from './PropertyCard';
-import PropertyModal from './PropertyModal';
-import SmsComposePage from './SmsComposePage';
-import SettingsPage from './SettingsPage';
-import ArchivesPage from './ArchivesPage';
-import IjangMapPage from './IjangMapPage';
->>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c:components/DashboardApp.tsx
 import { Visit } from '@/types';
 import { getFormattedDate, cn } from '@/lib/utils';
 

@@ -1,13 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
-<<<<<<< HEAD:auth/AuthContext.tsx
 import { User, onAuthStateChanged, signInWithRedirect, signInWithPopup, getRedirectResult, signOut } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
-=======
-import { User, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
->>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c:context/AuthContext.tsx
 import {
   getAppUser, createAppUser, registerDevice, getDevices,
   subscribeUserDoc, updateUserStatus,
@@ -283,23 +278,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // ── 만료 / 미활성 체크 (슈퍼어드민 제외) ──
-<<<<<<< HEAD:auth/AuthContext.tsx
-      if (!isSuperAdmin && aUser.status === 'approved') {
-        const isExpired = aUser.expiryDate != null && aUser.expiryDate < Date.now();
-        // planStatus 필드 자체가 없는(undefined) 경우는 데이터 마이그레이션 문제이므로
-        // 명시적으로 비활성 값이 설정된 경우에만 차단 (undefined는 통과)
-        const isNotActive = aUser.planStatus != null && aUser.planStatus !== '사용중';
-        if (isExpired || isNotActive) {
-          setExpiryError('서비스 이용 기간이 만료되었습니다.\n연장 문의 부탁드립니다.');
-          setAppUser(aUser);
-          return;
-        }
-=======
       if (!isSuperAdmin && aUser.status === 'approved' && !canAccess(aUser)) {
         setExpiryError('서비스 이용 기간이 만료되었습니다.\n연장 문의 부탁드립니다.');
         setAppUser(aUser);
         return;
->>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c:context/AuthContext.tsx
       }
 
       // ── PENDING 유저: 승인 대기 실시간 구독 ──
@@ -327,13 +309,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userDocUnsubRef.current = subscribeUserDoc(user.uid, (updated) => {
         if (!updated) return;
         if (updated.status === 'rejected') { signOut(auth); return; }
-<<<<<<< HEAD:auth/AuthContext.tsx
-        const isExpired   = updated.expiryDate != null && updated.expiryDate < Date.now();
-        const isNotActive = updated.planStatus != null && updated.planStatus !== '사용중';
-        if (!isSuperAdmin && (isExpired || isNotActive)) {
-=======
         if (!isSuperAdmin && updated.status === 'approved' && !canAccess(updated)) {
->>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c:context/AuthContext.tsx
           setExpiryError('서비스 이용 기간이 만료되었습니다.\n연장 문의 부탁드립니다.');
         }
         setAppUser(updated);
@@ -437,7 +413,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const useRedirect = mobile || process.env.NODE_ENV !== 'development';
 
     try {
-<<<<<<< HEAD:auth/AuthContext.tsx
       if (useRedirect) {
         console.log(`[AUTH-02] signInWithRedirect 시작 (mobile=${mobile})`);
         await signInWithRedirect(auth, googleProvider);
@@ -450,30 +425,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err: unknown) {
       console.error('[Auth] Google 로그인 시작 오류:', err);
       setLoginError('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
-=======
-      await signInWithPopup(auth, googleProvider);
-    } catch (popupErr: unknown) {
-      const code = (popupErr as { code?: string }).code ?? 'unknown';
-      const msg  = (popupErr as { message?: string }).message ?? String(popupErr);
-      // 팝업 차단 또는 지원 불가 환경 → redirect fallback
-      if (
-        code === 'auth/popup-blocked' ||
-        code === 'auth/popup-closed-by-user' ||
-        code === 'auth/cancelled-popup-request'
-      ) {
-        try {
-          await signInWithRedirect(auth, googleProvider);
-        } catch (redirectErr: unknown) {
-          const rCode = (redirectErr as { code?: string }).code ?? 'unknown';
-          const rMsg  = (redirectErr as { message?: string }).message ?? String(redirectErr);
-          console.error('[Auth] Google 로그인(redirect) 오류 code:', rCode, 'message:', rMsg);
-          setLoginError(`[redirect] ${rCode}: ${rMsg}`);
-        }
-        return;
-      }
-      console.error('[Auth] Google 로그인(popup) 오류 code:', code, 'message:', msg);
-      setLoginError(`[popup] ${code}: ${msg}`);
->>>>>>> dc86bc4ac8b66211275c78d9715f7ed469cacf3c:context/AuthContext.tsx
     }
   }
 
