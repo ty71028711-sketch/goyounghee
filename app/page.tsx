@@ -218,7 +218,7 @@ export default function LandingPage() {
                 멤버 로그인
               </button>
             )}
-            {firebaseUser && appUser?.status === 'approved' && appUser?.planStatus === '사용중' && (
+            {firebaseUser && appUser && canAccess(appUser) && (
               <button
                 onClick={() => router.push('/dashboard')}
                 className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 active:scale-95 px-4 py-1.5 rounded-full transition-all shadow-md shadow-blue-900/50"
@@ -273,7 +273,7 @@ export default function LandingPage() {
                   </p>
                 )}
               </div>
-            ) : (appUser?.status === 'approved' && appUser?.planStatus === '사용중') ? (
+            ) : (appUser && canAccess(appUser)) ? (
               <button
                 onClick={() => router.push('/dashboard')}
                 className="inline-flex items-center gap-3 bg-blue-600 hover:bg-blue-500 active:scale-[.98] text-white font-bold text-base px-7 py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40">

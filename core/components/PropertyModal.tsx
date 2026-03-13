@@ -148,6 +148,7 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
               <input name="apartmentName" value={form.apartmentName} onChange={handleChange} className={inputCls} />
               {showOffice && (
                 <div className="flex gap-3 mt-1.5">
+                  <span className="text-[11px] font-semibold text-slate-400 mr-0.5">오피스텔(선택)</span>
                   {[['officetelResidential','주거용'],['officetelBusiness','업무용']].map(([k,l]) => (
                     <label key={k} className="flex items-center gap-1.5 cursor-pointer">
                       <CheckBox checked={!!form[k as keyof typeof form]} onChange={() => setForm(p => ({ ...p, [k]: !p[k as keyof typeof p] }))} size="sm" />
@@ -348,20 +349,14 @@ export default function PropertyModal({ initialData, onSave, onClose }: Props) {
             </div>
           </div>
 
-          {/* 방문 연락처 */}
-          <div>
-            <label className={labelCls}>방문 연락처</label>
-            <PhoneField value={form.visitPhone} onChange={v => setForm(p => ({ ...p, visitPhone: v }))} />
-          </div>
-
-          {/* 손님 정보 */}
+          {/* 방문 정보 */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>손님 이름</label>
+              <label className={labelCls}>방문</label>
               <input name="guestName" value={form.guestName ?? ''} onChange={handleChange} className={inputCls} placeholder="손님 성함" />
             </div>
             <div>
-              <label className={labelCls}>손님 전화번호</label>
+              <label className={labelCls}>방문 전화번호</label>
               <PhoneField value={form.guestPhone ?? ''} onChange={v => setForm(p => ({ ...p, guestPhone: v }))} />
             </div>
           </div>
