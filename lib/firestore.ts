@@ -31,9 +31,46 @@ export async function approveOneYear(uid: string): Promise<void> {
   const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
   await updateDoc(doc(db, 'users', uid), {
     status:     'approved',
-    planStatus: '사용중',
+    planStatus: 'active',
+    planType:   'paid',
     approvedAt: now,
     expiryDate: now + ONE_YEAR_MS,
+  });
+}
+
+export async function startFreeTrial(uid: string): Promise<void> {
+  const now = Date.now();
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+  await updateDoc(doc(db, 'users', uid), {
+    status:     'approved',
+    planStatus:   'trial',
+    planType:     'trial',
+    approvedAt:   now,
+    trialStartAt: now,
+    expiryDate:   now + SEVEN_DAYS_MS,
+  });
+}
+
+export async function softDeleteUser(uid: string, reason?: string): Promise<void> {
+  await updateDoc(doc(db, 'users', uid), {
+    status:        'deleted',
+    planStatus:    'inactive',
+    deletedAt:     Date.now(),
+    deletedReason: reason ?? null,
+  });
+}
+
+export async function hardDeleteUser(uid: string): Promise<void> {
+  await deleteDoc(doc(db, 'users', uid));
+}
+
+export async function resetToPending(uid: string): Promise<void> {
+  await updateDoc(doc(db, 'users', uid), {
+    status:     'pending',
+    planStatus: '승인대기',
+    planType:   null,
+    approvedAt: null,
+    expiryDate: null,
   });
 }
 

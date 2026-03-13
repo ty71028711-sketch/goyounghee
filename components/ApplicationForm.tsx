@@ -7,7 +7,6 @@ import { ReceiptType } from '@/types';
 type ApplyFormState = {
   name:          string;
   phone:         string;
-  officeName:    string;
   depositorName: string;
   googleEmail:   string;
   receiptType:   ReceiptType;
@@ -16,7 +15,7 @@ type ApplyFormState = {
 };
 
 const EMPTY: ApplyFormState = {
-  name: '', phone: '', officeName: '', depositorName: '', googleEmail: '',
+  name: '', phone: '', depositorName: '', googleEmail: '',
   receiptType: '없음', receiptInfo: '',
   plan: '1년권 - 55,000원 (VAT 포함)',
 };
@@ -59,7 +58,6 @@ export default function ApplicationForm() {
       await submitApplication({
         name:          form.name.trim(),
         phone:         form.phone.trim(),
-        officeName:    form.officeName.trim() || undefined,
         depositorName: form.depositorName.trim(),
         googleEmail:   form.googleEmail.trim(),
         receiptType:   form.receiptType,
