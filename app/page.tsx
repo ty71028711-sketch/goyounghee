@@ -8,13 +8,10 @@ import { canAccess } from '@/lib/utils';
 
 export default function LandingPage() {
   const { firebaseUser, appUser, loading, deviceError, expiryError, loginError,
-          pendingNewUser, signInWithGoogle, logout, completeSignup } = useAuth();
+          signInWithGoogle, logout } = useAuth();
   const router = useRouter();
 
   const [localTimeout, setLocalTimeout] = useState(false);
-  const [signupName,    setSignupName]    = useState('');
-  const [signupPhone,   setSignupPhone]   = useState('');
-  const [signupLoading, setSignupLoading] = useState(false);
 
   // 3초 안전 타임아웃 — loading이 지연돼도 무한스피너 방지
   useEffect(() => {
@@ -33,14 +30,6 @@ export default function LandingPage() {
       router.replace('/expired');
     }
   }, [loading, localTimeout, appUser, deviceError, expiryError, firebaseUser, router]);
-
-  async function handleSignupSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!signupName.trim() || !signupPhone.trim()) return;
-    setSignupLoading(true);
-    await completeSignup(signupName.trim(), signupPhone.trim());
-    setSignupLoading(false);
-  }
 
   // ── 세션 체크 중 로딩 (최대 3초) ──
   if (loading && !localTimeout) {
@@ -65,70 +54,15 @@ export default function LandingPage() {
     );
   }
 
-  // ── 신규 회원: 성함 + 전화번호 입력 폼 ──
-  if (pendingNewUser) {
+  // ── appUser 존재 → useEffect가 리다이렉트 예정 → 랜딩 페이지 노출 방지 ──
+  // (useEffect는 렌더 이후 실행되므로, 리다이렉트 전 랜딩이 1회 렌더되는 깜빡임 차단)
+  if (firebaseUser && appUser && !deviceError) {
     return (
-      <div className="min-h-screen bg-[#050d1f] flex flex-col items-center justify-center px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-blue-600/15 rounded-full blur-[120px]" />
-        </div>
-        <div className="relative z-10 flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-700 rounded-xl flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <rect x="4" y="2" width="16" height="20" rx="2"/>
-              <path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
-            </svg>
-          </div>
-          <span className="font-bold text-white text-base tracking-tight">소장노트 <span className="text-blue-400">PRO</span></span>
-        </div>
-        <div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-blue-500 to-blue-700" />
-          <div className="px-8 py-9">
-            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-              <svg className="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-              </svg>
-            </div>
-            <h2 className="text-slate-900 font-extrabold text-xl text-center mb-1">추가 정보 입력</h2>
-            <p className="text-slate-500 text-sm text-center mb-6">서비스 이용을 위해 아래 정보를 입력해 주세요</p>
-            {pendingNewUser.photoURL && (
-              <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 mb-5">
-                <img src={pendingNewUser.photoURL} alt="" className="w-9 h-9 rounded-full flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-slate-800 font-bold text-sm truncate">{pendingNewUser.displayName}</p>
-                  <p className="text-slate-400 text-xs truncate">{pendingNewUser.email}</p>
-                </div>
-              </div>
-            )}
-            <form onSubmit={handleSignupSubmit} className="space-y-3">
-              <div>
-                <label className="block text-[12px] font-bold text-slate-600 mb-1">성함 <span className="text-red-500">*</span></label>
-                <input type="text" required value={signupName} onChange={e => setSignupName(e.target.value)}
-                  placeholder="실명을 입력해 주세요"
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-              </div>
-              <div>
-                <label className="block text-[12px] font-bold text-slate-600 mb-1">전화번호 <span className="text-red-500">*</span></label>
-                <input type="tel" required value={signupPhone} onChange={e => setSignupPhone(e.target.value)}
-                  placeholder="010-0000-0000"
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-              </div>
-              <button type="submit" disabled={signupLoading || !signupName.trim() || !signupPhone.trim()}
-                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm rounded-2xl transition-all shadow-lg shadow-blue-200 mt-2">
-                {signupLoading ? '가입 중...' : '가입 신청하기'}
-              </button>
-            </form>
-            <button onClick={logout} className="w-full mt-3 py-2.5 text-slate-400 hover:text-slate-600 text-sm font-semibold rounded-2xl hover:bg-slate-50 transition-colors">
-              다른 계정으로 로그인
-            </button>
-          </div>
-        </div>
-        <p className="relative z-10 mt-6 text-blue-900/60 text-xs">입금 확인 후 최대 1시간 이내 서비스가 활성화됩니다</p>
+      <div className="min-h-screen bg-[#050d1f] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
-
-
 
   // ── 기기 제한 오류 화면 ──
   if (firebaseUser && appUser && deviceError) {

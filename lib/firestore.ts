@@ -90,6 +90,30 @@ export async function submitApplication(
     createdAt: Date.now(),
     status:    '신청완료',
   });
+
+  // uid가 있을 경우 users/{uid} 문서도 함께 생성 (없을 때만)
+  // → adminStartTrial/adminApproveAnnual 이 updateDoc 으로 작동하려면 문서가 미리 있어야 함
+  if (data.uid) {
+    const userRef = doc(db, 'users', data.uid);
+    const snap    = await getDoc(userRef);
+    if (!snap.exists()) {
+      const cu = auth.currentUser;
+      await setDoc(userRef, {
+        uid:         data.uid,
+        email:       data.googleEmail,
+        displayName: cu?.displayName ?? '',
+        name:        data.name,
+        phone:       data.phone,
+        photoURL:    cu?.photoURL ?? '',
+        status:      'pending',
+        planStatus:  '승인대기',
+        expiryDate:  null,
+        createdAt:   Date.now(),
+        devices:     [],
+      });
+    }
+  }
+
   return ref.id;
 }
 

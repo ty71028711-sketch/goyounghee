@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { submitApplication } from '@/lib/firestore';
 import { ReceiptType } from '@/types';
 import { useAuth } from '@/auth/AuthContext';
@@ -22,9 +23,9 @@ const EMPTY: ApplyFormState = {
 
 export default function ApplicationForm() {
   const { firebaseUser, signInWithGoogle } = useAuth();
+  const router = useRouter();
   const [form,    setForm]    = useState<ApplyFormState>(EMPTY);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
 
   function setField<K extends keyof ApplyFormState>(key: K, val: ApplyFormState[K]) {
@@ -67,8 +68,7 @@ export default function ApplicationForm() {
         receiptInfo:   form.receiptInfo.trim(),
         plan:          form.plan,
       });
-      setForm(EMPTY);
-      setSuccess(true);
+      router.push('/pending');
     } catch (err) {
       console.error('[ApplicationForm] 신청 오류:', err);
       setError('신청 중 오류가 발생했습니다. 잠시 후 다시 시도하거나 카카오채널로 문의해 주세요.');
@@ -272,44 +272,6 @@ export default function ApplicationForm() {
         </form>
       </div>
 
-      {/* 신청 완료 팝업 */}
-      {success && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-6">
-          <div className="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl">
-            <div className="h-1.5 bg-gradient-to-r from-blue-500 to-amber-400" />
-            <div className="px-8 py-10 text-center">
-              <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-                <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-              </div>
-              <h3 className="text-slate-900 font-extrabold text-2xl mb-2">관리자 승인중</h3>
-              <p className="text-slate-500 text-base leading-relaxed mb-6">
-                신청이 접수되었습니다!<br />
-                입금 확인 후 최대{' '}
-                <span className="text-blue-600 font-bold">1시간 이내</span>로<br />
-                서비스가 승인됩니다.<br /><br />
-                빠른 승인이 필요하시면 카카오채널로<br />
-                입금 완료 사실을 알려주세요!
-              </p>
-              <a href="http://pf.kakao.com/_LDfqX/chat" target="_blank" rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 bg-[#FEE500] hover:bg-[#f5dc00] text-[#3A1D1D] font-bold text-base py-4 rounded-2xl transition-all shadow-md shadow-yellow-200 mb-3">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3A1D1D">
-                  <path d="M12 3C6.48 3 2 6.69 2 11.25c0 2.91 1.72 5.48 4.35 7.02l-.87 3.19a.5.5 0 0 0 .74.57l3.73-2.15c.64.09 1.3.14 1.97.14 5.52 0 10-3.69 10-8.25S17.52 3 12 3z"/>
-                </svg>
-                카카오채널에서 입금 알리기
-              </a>
-              <button
-                onClick={() => setSuccess(false)}
-                className="w-full py-3.5 text-slate-400 hover:text-slate-600 text-sm font-semibold rounded-2xl hover:bg-slate-50 transition-colors"
-              >
-                닫기
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
