@@ -92,6 +92,7 @@ export interface Archive {
 
 export interface ApplicationForm {
   id:            string;
+  uid?:          string;
   name:          string;
   phone:         string;
   officeName?:   string;
