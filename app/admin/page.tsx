@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/auth/AuthContext';
 import { subscribeAllUsers, revokeDevice } from '@/auth/userStore';
 import {
-  subscribeApplications, updateApplicationStatus,
+  subscribeApplications, updateApplicationStatus, deleteApplication,
   adminStartTrial, adminApproveAnnual, adminArchiveUser, adminHardDeleteUser,
 } from '@/lib/firestore';
 import { AppUser, ApplicationForm } from '@/types';
@@ -124,7 +124,38 @@ export default function AdminPage() {
     }
   }
 
-  /* ─── 보관함 핸들러 ─── */
+  /* ─── 신청관리 보관함 핸들러 ─── */
+
+  async function handleArchiveApp(app: ApplicationForm) {
+    if (!confirm(`"${app.name}" 님의 신청서를 보관함으로 이동하시겠습니까?\n데이터는 유지됩니다.`)) return;
+    const key = `archive_app_${app.id}`;
+    setBusy(b => ({ ...b, [key]: true }));
+    try {
+      await updateApplicationStatus(app.id, '보관');
+    } catch (e) {
+      console.error('[Admin] 신청서 보관 오류:', e);
+      alert(`보관 처리 중 오류가 발생했습니다.\n${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBusy(b => ({ ...b, [key]: false }));
+    }
+  }
+
+  async function handleDeleteApp(id: string) {
+    if (!confirm('신청서를 완전 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+    if (!confirm('⚠️ 마지막 확인: 신청서를 영구 삭제합니다.')) return;
+    const key = `delete_app_${id}`;
+    setBusy(b => ({ ...b, [key]: true }));
+    try {
+      await deleteApplication(id);
+    } catch (e) {
+      console.error('[Admin] 신청서 삭제 오류:', e);
+      alert(`삭제 중 오류가 발생했습니다.\n${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBusy(b => ({ ...b, [key]: false }));
+    }
+  }
+
+  /* ─── 보관함 핸들러 (회원) ─── */
 
   async function handleHardDelete(uid: string) {
     if (!confirm('완전 삭제하면 복구할 수 없습니다.\n정말 삭제하시겠습니까?')) return;
@@ -143,6 +174,7 @@ export default function AdminPage() {
 
   /* ─── 데이터 분류 ─── */
   const pendingApps   = applications.filter(a => a.status === '신청완료');
+  const archivedApps  = applications.filter(a => a.status === '보관');
   const approvedUsers = users.filter(u => u.status === 'approved');
   const archivedUsers = users.filter(u => u.status === 'deleted');
 
@@ -249,7 +281,7 @@ export default function AdminPage() {
             onClick={() => setMainTab('archived')}
             className="px-5 py-2.5 rounded-xl text-sm font-bold border transition-all text-gray-400 bg-gray-400/10 border-gray-400/30 data-[active=true]:bg-gray-600 data-[active=true]:text-white data-[active=true]:border-gray-600"
           >
-            🗂 보관함 ({archivedUsers.length})
+            🗂 보관함 ({archivedUsers.length + archivedApps.length})
           </button>
         </div>
 
@@ -313,10 +345,11 @@ export default function AdminPage() {
                       ⭐ 1년 승인
                     </button>
                     <button
-                      disabled
-                      className="px-4 py-2 bg-[#1a2035] opacity-40 text-slate-400 text-xs font-bold rounded-xl border border-blue-900/40 whitespace-nowrap cursor-not-allowed"
+                      disabled={busy[`archive_app_${app.id}`]}
+                      onClick={() => handleArchiveApp(app)}
+                      className="px-4 py-2 bg-[#1a2035] hover:bg-slate-700 disabled:opacity-40 text-slate-400 hover:text-slate-200 text-xs font-bold rounded-xl border border-slate-700/40 transition-colors whitespace-nowrap"
                     >
-                      🗑 삭제
+                      {busy[`archive_app_${app.id}`] ? '...' : '🗑 보관함'}
                     </button>
                   </div>
                 </div>
@@ -447,45 +480,98 @@ export default function AdminPage() {
 
         {/* ─── 보관함 ─── */}
         {mainTab === 'archived' && (
-          <div className="space-y-3">
-            {archivedUsers.length === 0 && (
-              <div className="text-center py-20 text-slate-500">
-                <p className="text-4xl mb-3">🗂</p>
-                <p>보관함이 비어 있습니다</p>
-              </div>
-            )}
-            {archivedUsers.map(u => (
-              <div key={u.uid} className="bg-[#0d1426] border border-gray-700/40 rounded-2xl p-5 hover:border-gray-600/60 transition-colors opacity-80">
-                <div className="flex items-start gap-4">
-                  {u.photoURL
-                    ? <img src={u.photoURL} alt="" className="w-11 h-11 rounded-full flex-shrink-0 ring-2 ring-gray-800 opacity-60" />
-                    : <div className="w-11 h-11 rounded-full flex-shrink-0 bg-gray-900/60 border border-gray-700 flex items-center justify-center text-lg">👤</div>
-                  }
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <span className="font-bold text-gray-300">{u.name || u.displayName || '이름 없음'}</span>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full border bg-gray-500/15 text-gray-400 border-gray-500/30">보관함</span>
-                    </div>
-                    <p className="text-slate-500 text-sm">{u.email}</p>
-                    {u.phone && <p className="text-slate-600 text-xs mt-0.5">📞 {u.phone}</p>}
-                    {(u.archivedAt ?? u.deletedAt) && (
-                      <p className="text-slate-600 text-xs mt-1">
-                        보관됨: {new Date((u.archivedAt ?? u.deletedAt)!).toLocaleDateString('ko-KR')}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex-shrink-0">
-                    <button
-                      disabled={busy[`harddelete_${u.uid}`]}
-                      onClick={() => handleHardDelete(u.uid)}
-                      className="px-4 py-2 bg-red-900/50 hover:bg-red-800/70 disabled:opacity-40 text-red-300 text-xs font-bold rounded-xl border border-red-700/40 transition-colors whitespace-nowrap"
-                    >
-                      {busy[`harddelete_${u.uid}`] ? '...' : '💀 완전 삭제'}
-                    </button>
-                  </div>
+          <div className="space-y-6">
+
+            {/* 보관된 신청서 */}
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">📋 보관된 신청서 ({archivedApps.length})</p>
+              {archivedApps.length === 0 ? (
+                <div className="text-center py-10 text-slate-600 bg-[#0d1426] border border-gray-800/40 rounded-2xl">
+                  <p>보관된 신청서가 없습니다</p>
                 </div>
+              ) : (
+                <div className="space-y-3">
+                  {archivedApps.map(app => (
+                    <div key={app.id} className="bg-[#0d1426] border border-gray-700/40 rounded-2xl p-5 opacity-80">
+                      <div className="flex items-start gap-4">
+                        <div className="w-11 h-11 rounded-full flex-shrink-0 bg-gray-800/60 border border-gray-700 flex items-center justify-center text-lg">📝</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className="font-bold text-gray-300">{app.name}</span>
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-full border bg-gray-500/15 text-gray-400 border-gray-500/30">보관됨</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 mt-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-slate-600 text-xs w-16 flex-shrink-0">전화번호</span>
+                              <span className="text-slate-400 text-xs">{app.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-slate-600 text-xs w-16 flex-shrink-0">구글 ID</span>
+                              <span className="text-slate-500 text-xs truncate">{app.googleEmail}</span>
+                            </div>
+                          </div>
+                          <p className="text-slate-700 text-xs mt-1.5">신청일: {new Date(app.createdAt).toLocaleString('ko-KR')}</p>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <button
+                            disabled={busy[`delete_app_${app.id}`]}
+                            onClick={() => handleDeleteApp(app.id)}
+                            className="px-4 py-2 bg-red-900/50 hover:bg-red-800/70 disabled:opacity-40 text-red-300 text-xs font-bold rounded-xl border border-red-700/40 transition-colors whitespace-nowrap"
+                          >
+                            {busy[`delete_app_${app.id}`] ? '...' : '💀 완전 삭제'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 보관된 회원 */}
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">👥 보관된 회원 ({archivedUsers.length})</p>
+              <div className="space-y-3">
+                {archivedUsers.length === 0 && (
+                  <div className="text-center py-10 text-slate-600 bg-[#0d1426] border border-gray-800/40 rounded-2xl">
+                    <p>보관된 회원이 없습니다</p>
+                  </div>
+                )}
+                {archivedUsers.map(u => (
+                  <div key={u.uid} className="bg-[#0d1426] border border-gray-700/40 rounded-2xl p-5 hover:border-gray-600/60 transition-colors opacity-80">
+                    <div className="flex items-start gap-4">
+                      {u.photoURL
+                        ? <img src={u.photoURL} alt="" className="w-11 h-11 rounded-full flex-shrink-0 ring-2 ring-gray-800 opacity-60" />
+                        : <div className="w-11 h-11 rounded-full flex-shrink-0 bg-gray-900/60 border border-gray-700 flex items-center justify-center text-lg">👤</div>
+                      }
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <span className="font-bold text-gray-300">{u.name || u.displayName || '이름 없음'}</span>
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full border bg-gray-500/15 text-gray-400 border-gray-500/30">보관함</span>
+                        </div>
+                        <p className="text-slate-500 text-sm">{u.email}</p>
+                        {u.phone && <p className="text-slate-600 text-xs mt-0.5">📞 {u.phone}</p>}
+                        {(u.archivedAt ?? u.deletedAt) && (
+                          <p className="text-slate-600 text-xs mt-1">
+                            보관됨: {new Date((u.archivedAt ?? u.deletedAt)!).toLocaleDateString('ko-KR')}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex-shrink-0">
+                        <button
+                          disabled={busy[`harddelete_${u.uid}`]}
+                          onClick={() => handleHardDelete(u.uid)}
+                          className="px-4 py-2 bg-red-900/50 hover:bg-red-800/70 disabled:opacity-40 text-red-300 text-xs font-bold rounded-xl border border-red-700/40 transition-colors whitespace-nowrap"
+                        >
+                          {busy[`harddelete_${u.uid}`] ? '...' : '💀 완전 삭제'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
           </div>
         )}
 

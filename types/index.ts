@@ -1,5 +1,5 @@
 export type ReceiptType      = '없음' | '현금영수증' | '세금계산서';
-export type ApplicationStatus = '신청완료' | '사전승인' | '처리완료';
+export type ApplicationStatus = '신청완료' | '사전승인' | '처리완료' | '보관';
 export type Category         = 'apt' | 'sale' | 'house';
 export type DealType         = 'sale' | 'rental' | 'saleRight' | 'saleRightRental';
 export type RentalType       = 'jeonse' | 'monthly';
