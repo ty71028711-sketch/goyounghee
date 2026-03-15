@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey:            'AIzaSyA5uBZG3kHEhGfwjqclqB9mtStu5wZCpMo',
-  authDomain:        'imjangmate-5847f.firebaseapp.com',
+  authDomain:        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? 'app.sojangnote.com',
   projectId:         'imjangmate-5847f',
   storageBucket:     'imjangmate-5847f.firebasestorage.app',
   messagingSenderId: '185747962306',
