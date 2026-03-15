@@ -436,11 +436,11 @@ export default function LandingPage() {
               <div className="p-7">
                 <span className="text-[11px] font-black text-blue-500 tracking-[0.2em] uppercase">Feature 01</span>
                 <h3 className="text-xl font-extrabold text-slate-900 mt-2 mb-3 leading-snug">
-                  초스피드 입력<br />
-                  <span className="text-blue-600">터치 한 번으로 끝</span>
+                  매물 방문 시간 기준<br />
+                  <span className="text-blue-600">자동 동선 정렬</span>
                 </h3>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  복잡한 매물 정보도 손가락 몇 번의 터치로 완성. 아파트·오피스텔·분양권·주택 카테고리별로 맞춤 입력 화면이 펼쳐집니다.
+                  여러 매물을 안내할 때 방문 시간을 기준으로 자동으로 동선이 정렬됩니다.<br /><br />복잡한 임장 일정도 한눈에 정리됩니다.
                 </p>
               </div>
             </div>
@@ -478,11 +478,11 @@ export default function LandingPage() {
               <div className="p-7">
                 <span className="text-[11px] font-black text-indigo-500 tracking-[0.2em] uppercase">Feature 02</span>
                 <h3 className="text-xl font-extrabold text-slate-900 mt-2 mb-3 leading-snug">
-                  지능형 필터링<br />
-                  <span className="text-indigo-600">원하는 매물만 쏙쏙</span>
+                  현장에서 매물<br />
+                  <span className="text-indigo-600">문자 바로 전송</span>
                 </h3>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  &quot;반려동물 가능&quot;, &quot;주차 2대&quot; 같은 고객 니즈를 체크 하나로 필터링. 고객 맞춤 매물을 1초 만에 추려냅니다.
+                  안내한 매물을 버튼 한 번으로 고객에게 바로 전송합니다.<br /><br />사무실에 돌아와 다시 정리할 필요 없습니다.
                 </p>
               </div>
             </div>
@@ -521,11 +521,11 @@ export default function LandingPage() {
               <div className="p-7">
                 <span className="text-[11px] font-black text-emerald-600 tracking-[0.2em] uppercase">Feature 03</span>
                 <h3 className="text-xl font-extrabold text-slate-900 mt-2 mb-3 leading-snug">
-                  실시간 대시보드<br />
-                  <span className="text-emerald-600">매물 현황 한눈에</span>
+                  고객별 안내 매물<br />
+                  <span className="text-emerald-600">자동 저장</span>
                 </h3>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  오늘 임장한 매물 전체를 지도와 목록으로 한 화면에. PC와 모바일이 실시간 동기화되어 언제 어디서나 최신 정보를 확인합니다.
+                  고객에게 안내했던 매물을 고객별로 자동 저장합니다.<br /><br />다음 상담 때 어떤 매물을 봤는지 바로 확인할 수 있습니다.
                 </p>
               </div>
             </div>
