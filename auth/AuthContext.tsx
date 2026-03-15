@@ -418,12 +418,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signInWithRedirect(auth, googleProvider);
         // 브라우저가 Google로 리다이렉트됨 — 이하 코드 실행 안 됨
       } else {
-  console.log('[AUTH-02] signInWithPopup 시작 (desktop)');
-  const result = await signInWithPopup(auth, googleProvider);
-  console.log('[AUTH-POPUP-SUCCESS]', result.user?.uid, result.user?.email);
-  console.log('[AUTH-02B] signInWithPopup 완료 → onAuthStateChanged 대기');
-}
-}
+        console.log('[AUTH-02] signInWithPopup 시작 (desktop)');
+        const result = await signInWithPopup(auth, googleProvider);
+        console.log('[AUTH-POPUP-SUCCESS]', result.user?.uid, result.user?.email);
+        console.log('[AUTH-02B] signInWithPopup 완료 → onAuthStateChanged 대기');
+      }
     } catch (err: unknown) {
       console.error('[Auth] Google 로그인 시작 오류:', err);
       setLoginError('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
