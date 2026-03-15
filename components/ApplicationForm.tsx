@@ -51,11 +51,6 @@ export default function ApplicationForm() {
       setError('전화번호를 입력해 주세요.');
       return;
     }
-    if (!form.depositorName.trim()) {
-      setError('입금자명을 입력해 주세요.');
-      return;
-    }
-
     setLoading(true);
     try {
       await submitApplication({
@@ -135,6 +130,20 @@ export default function ApplicationForm() {
         <div className="h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-amber-400" />
         <form onSubmit={handleSubmit} noValidate className="px-6 py-8 space-y-5">
 
+          {/* 폼 상단 안내 */}
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-3.5 space-y-1">
+            <p className="text-blue-300 text-sm font-bold leading-snug">
+              구글 로그인 후 7일 무료체험이 바로 시작됩니다.
+            </p>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              지금은 결제 단계가 아니며, 체험 후 원하실 때 유료 전환할 수 있습니다.
+            </p>
+          </div>
+
+          <p className="text-slate-400 text-xs text-center">
+            무료체험 시작을 위해 아래 정보만 입력해주세요 &nbsp;·&nbsp; 성함 · 전화번호 · 구글계정
+          </p>
+
           <div>
             <label className="block text-[11px] font-bold text-blue-300 mb-1.5 uppercase tracking-widest">
               성함 <span className="text-red-400">*</span>
@@ -163,7 +172,7 @@ export default function ApplicationForm() {
 
           <div>
             <label className="block text-[11px] font-bold text-blue-300 mb-1.5 uppercase tracking-widest">
-              입금자명 <span className="text-red-400">*</span>
+              입금자명
             </label>
             <input
               type="text"
@@ -172,6 +181,7 @@ export default function ApplicationForm() {
               placeholder="실제 입금하시는 분의 성함"
               className="w-full bg-blue-950/50 border border-blue-800/60 rounded-xl px-4 py-3.5 text-base text-white placeholder-slate-500 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40 transition-colors"
             />
+            <p className="text-slate-500 text-xs mt-1.5">무료체험 시작에는 입력하지 않아도 됩니다. 유료 전환 시 사용됩니다.</p>
           </div>
 
           <div>
@@ -188,7 +198,8 @@ export default function ApplicationForm() {
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-blue-300 mb-2 uppercase tracking-widest">증빙 서류</label>
+            <label className="block text-[11px] font-bold text-blue-300 mb-1.5 uppercase tracking-widest">증빙 서류</label>
+            <p className="text-slate-500 text-xs mb-2">증빙서류는 유료 결제 시 선택 가능합니다.</p>
             <div className="flex gap-2 mb-3">
               {(['없음', '현금영수증', '세금계산서'] as ReceiptType[]).map(type => (
                 <button
@@ -228,6 +239,9 @@ export default function ApplicationForm() {
                 <p className="text-slate-500 text-xs">VAT 포함</p>
               </div>
             </div>
+            <p className="text-slate-500 text-xs mt-1.5 leading-relaxed">
+              현재는 7일 무료체험이 먼저 시작됩니다. 이후 원하실 경우 1년 이용권(55,000원)으로 전환 가능합니다.
+            </p>
           </div>
 
           {/* 오류 메시지 */}
@@ -241,6 +255,8 @@ export default function ApplicationForm() {
               <p className="text-red-400 text-sm leading-relaxed">{error}</p>
             </div>
           )}
+
+          <p className="text-slate-400 text-xs text-center">구글 로그인 후 무료체험이 시작됩니다.</p>
 
           <button
             type="submit"
