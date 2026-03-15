@@ -314,10 +314,11 @@ export default function LandingPage() {
           <div className="text-center mb-14">
             <p className="text-red-500 text-xs font-bold tracking-[0.2em] uppercase mb-3">The Problem</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight mb-4">
-              더 이상 잃어버린 포스트잇 때문에<br />당황하지 마세요.
+              임장 중 매물 찾느라<br />고객 앞에서 당황한 적 있으신가요?
             </h2>
             <p className="text-slate-500 text-base sm:text-lg max-w-xl mx-auto">
-              현장에서 수첩을 뒤적이는 그 <strong className="text-red-500">5초</strong>, 고객의 마음은 이미 식어버립니다.
+              수첩을 뒤적이는 <strong className="text-red-500">5초</strong>,<br className="sm:hidden" />
+              고객의 신뢰는 이미 멀어집니다.
             </p>
           </div>
 
@@ -339,11 +340,11 @@ export default function LandingPage() {
               </div>
               <ul className="space-y-3">
                 {[
-                  '포스트잇이 어디 붙었는지 기억 안 남',
-                  '현장에서 수첩 페이지 넘기다 당황',
-                  '고객 앞에서 "잠깐만요..." 5번',
-                  '사무실 돌아와서야 문자 발송',
-                  '다음 날 메모 내용 해독 불가',
+                  '어느 부동산 매물이었는지 기억 안 남',
+                  '방문 시간이 바뀌면 동선이 꼬임',
+                  '현장에서 수첩 페이지 넘기며 당황',
+                  '고객 앞에서 "잠깐만요…" 반복',
+                  '안내했던 매물 다시 찾기 어려움',
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-2.5 text-sm text-slate-600">
                     <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -371,11 +372,11 @@ export default function LandingPage() {
               </div>
               <ul className="space-y-3">
                 {[
-                  '모든 매물, 스마트폰에서 1초 검색',
-                  '현장에서 당당하게 브리핑',
-                  '고객 앞에서 버튼 하나로 문자 전송',
-                  'PC↔모바일 실시간 동기화',
-                  '사진·메모 모두 깔끔하게 보관',
+                  '매물 방문 시간 기준 자동 동선 정렬',
+                  'PC에서 매물 입력 → 현장에서 모바일 바로 확인',
+                  '안내한 매물 고객에게 문자 즉시 전송',
+                  '고객별 안내 매물 자동 저장',
+                  '대단지 아파트도 카카오맵 바로 안내',
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 font-medium">
                     <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">

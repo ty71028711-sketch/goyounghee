@@ -81,7 +81,7 @@ export default function ExpiredPage() {
 
           {/* 카카오 문의 버튼 */}
           <a
-            href="#"
+            href="http://pf.kakao.com/_LDfqX/chat"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-2 bg-[#FEE500] hover:bg-[#f5dc00] active:scale-[.98] text-[#3A1D1D] font-bold text-sm py-3.5 rounded-2xl transition-all shadow-md shadow-yellow-200 mb-3"

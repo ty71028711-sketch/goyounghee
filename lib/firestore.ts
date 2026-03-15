@@ -131,3 +131,12 @@ export async function updateApplicationStatus(id: string, status: ApplicationSta
 export async function deleteApplication(id: string): Promise<void> {
   await deleteDoc(doc(db, 'applications', id));
 }
+
+/* ── 관리자: users 문서의 devices 배열에서 기기 제거 ─── */
+export async function adminRemoveDeviceFromUserDoc(uid: string, deviceId: string): Promise<void> {
+  const userRef = doc(db, 'users', uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+  const current: Array<{ deviceId: string }> = snap.data().devices ?? [];
+  await updateDoc(userRef, { devices: current.filter(d => d.deviceId !== deviceId) });
+}

@@ -82,9 +82,8 @@ export default function PendingPage() {
           )}
 
           {/* 카카오 문의 버튼 */}
-          {/* TODO: href에 카카오 채널 링크를 넣어주세요 */}
           <a
-            href="#"
+            href="http://pf.kakao.com/_LDfqX/chat"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-2 bg-[#FEE500] hover:bg-[#f5dc00] active:scale-[.98] text-[#3A1D1D] font-bold text-sm py-3.5 rounded-2xl transition-all shadow-md shadow-yellow-200 mb-3"
@@ -100,8 +99,11 @@ export default function PendingPage() {
             onClick={logout}
             className="w-full py-3 text-slate-400 hover:text-slate-600 text-sm font-semibold rounded-2xl hover:bg-slate-50 transition-colors"
           >
-            다른 계정으로 로그인
+            승인 완료 후 로그인
           </button>
+          <p className="text-slate-400 text-xs text-center mt-2 leading-relaxed">
+            카카오 문의 후 승인이 완료되면 다시 로그인해주세요.
+          </p>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import { subscribeAllUsers, revokeDevice } from '@/auth/userStore';
 import {
   subscribeApplications, updateApplicationStatus, deleteApplication,
   adminStartTrial, adminApproveAnnual, adminArchiveUser, adminHardDeleteUser,
+  adminRemoveDeviceFromUserDoc,
 } from '@/lib/firestore';
 import { AppUser, ApplicationForm } from '@/types';
 import { cn } from '@/lib/utils';
@@ -89,6 +90,13 @@ export default function AdminPage() {
     setBusy(b => ({ ...b, [key]: true }));
     try {
       await revokeDevice(uid, deviceId);
+      await adminRemoveDeviceFromUserDoc(uid, deviceId);
+      // 즉시 UI 반영
+      setUsers(prev => prev.map(u =>
+        u.uid === uid
+          ? { ...u, devices: (u.devices ?? []).filter(d => d.deviceId !== deviceId) }
+          : u
+      ));
     } catch (e) {
       console.error('[Admin] 기기 해제 오류:', e);
       alert(`기기 해제에 실패했습니다.\n${e instanceof Error ? e.message : String(e)}`);
