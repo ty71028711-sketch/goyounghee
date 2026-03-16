@@ -621,6 +621,7 @@ export default function LandingPage() {
             <p className="text-slate-400 text-base leading-relaxed">
               지금 신청하면 7일 동안 무료로 모든 기능을 사용할 수 있습니다.
             </p>
+            <p className="text-slate-400 text-sm mt-2">※ 7일 체험 후 유료로 자동 전환되지 않습니다.</p>
             <div className="w-12 h-1 bg-amber-400 rounded-full mx-auto mt-5" />
           </div>
 
