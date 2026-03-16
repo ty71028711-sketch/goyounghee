@@ -616,11 +616,10 @@ export default function LandingPage() {
           <div className="text-center mb-10">
             <p className="text-amber-400 text-xs font-bold tracking-[0.2em] uppercase mb-3">서비스 신청</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-3">
-              소장노트 PRO<br />서비스 신청서
+              소장노트 PRO<br />7일 무료 체험 신청
             </h2>
             <p className="text-slate-400 text-base leading-relaxed">
-              아래 정보를 입력하시면 입금 확인 후 최대{' '}
-              <span className="text-amber-400 font-bold">1시간 이내</span>로 승인됩니다.
+              지금 신청하면 7일 동안 무료로 모든 기능을 사용할 수 있습니다.
             </p>
             <div className="w-12 h-1 bg-amber-400 rounded-full mx-auto mt-5" />
           </div>

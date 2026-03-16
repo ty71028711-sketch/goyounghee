@@ -281,8 +281,12 @@ export default function ApplicationForm() {
             )}
           </button>
 
+          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-3 text-center">
+            <p className="text-emerald-400 text-sm font-bold leading-relaxed">
+              7일 체험 후 유료로 자동 연장되지 않으니 안심하고 사용하세요.
+            </p>
+          </div>
           <p className="text-slate-500 text-sm text-center leading-relaxed">
-            입금 확인 후 최대 1시간 이내 서비스가 활성화됩니다.<br />
             문의:{' '}
             <a href="http://pf.kakao.com/_LDfqX/chat" target="_blank" rel="noopener noreferrer"
               className="text-amber-400 hover:underline font-bold">
