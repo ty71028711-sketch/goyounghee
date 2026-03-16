@@ -128,8 +128,9 @@ export default function MobilePreviewSection() {
               <span className="text-amber-400">단 한 번의 입력으로</span>
             </h2>
             <p className="text-slate-400 text-base leading-relaxed mb-10">
-              앱 설치 없이 바로 접속하고<br />
-              구글 로그인 후 무료체험을 시작할 수 있습니다.
+              앱 스토어도, 다운로드도 필요 없습니다.<br />
+              스마트폰 브라우저에서{' '}
+              <span className="text-amber-300 font-bold">app.sojangnote.com</span>만 입력하면 끝입니다.
             </p>
 
             {/* 3단계 */}
@@ -157,7 +158,7 @@ export default function MobilePreviewSection() {
                     </svg>
                   ),
                   title: '주소 입력',
-                  desc: 'app.sojangnote.com 입력',
+                  desc: 'app.sojangnote.com 을 주소창에 입력',
                 },
                 {
                   num: '03',

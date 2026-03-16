@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/auth/AuthContext';
 import ApplicationForm from '@/components/ApplicationForm';
+import MobilePreviewSection from '@/components/MobilePreviewSection';
 import { canAccess } from '@/lib/utils';
 
 export default function LandingPage() {
@@ -609,7 +610,12 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════
-          SECTION 5 · 신청 폼
+          SECTION 5 · 모바일 접속 안내
+      ══════════════════════════════════════ */}
+      <MobilePreviewSection />
+
+      {/* ══════════════════════════════════════
+          SECTION 6 · 신청 폼
       ══════════════════════════════════════ */}
       <section id="apply" className="bg-[#0e2044] py-20 px-5">
         <div className="max-w-lg mx-auto">
