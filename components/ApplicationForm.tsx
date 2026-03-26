@@ -18,7 +18,7 @@ type ApplyFormState = {
 const EMPTY: ApplyFormState = {
   name: '', phone: '', depositorName: '',
   receiptType: '없음', receiptInfo: '',
-  plan: '1년권 - 55,000원 (VAT 포함)',
+  plan: '1년권 - 19,900원 (VAT 포함)',
 };
 
 export default function ApplicationForm() {
@@ -235,12 +235,12 @@ export default function ApplicationForm() {
                 <p className="text-slate-400 text-sm mt-0.5">월 4,500원 상당 · 자동 갱신 없음</p>
               </div>
               <div className="text-right">
-                <p className="text-amber-400 font-extrabold text-2xl">55,000원</p>
+                <p className="text-amber-400 font-extrabold text-2xl">19,900원</p>
                 <p className="text-slate-500 text-xs">VAT 포함</p>
               </div>
             </div>
             <p className="text-slate-500 text-xs mt-1.5 leading-relaxed">
-              현재는 7일 무료체험이 먼저 시작됩니다. 이후 원하실 경우 1년 이용권(55,000원)으로 전환 가능합니다.
+              현재는 7일 무료체험이 먼저 시작됩니다. 이후 원하실 경우 1년 이용권(19,900원)으로 전환 가능합니다.
             </p>
           </div>
 
