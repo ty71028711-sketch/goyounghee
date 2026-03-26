@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/auth/AuthContext';
 import ApplicationForm from '@/components/ApplicationForm';
 import MobilePreviewSection from '@/components/MobilePreviewSection';
+import OnboardingGuide from '@/components/OnboardingGuide';
 import { canAccess } from '@/lib/utils';
 
 export default function LandingPage() {
@@ -177,8 +178,8 @@ export default function LandingPage() {
             <h1 className="font-black text-white leading-tight mb-6">
               <span className="block text-xl sm:text-2xl text-slate-400 font-bold mb-2">아직도 매물을 노트에 적으세요?</span>
               <span className="block text-3xl sm:text-5xl drop-shadow-[0_0_24px_rgba(255,255,255,0.12)]">
-                임장 브리핑,<br />스마트폰 하나로<br />
-                <span className="text-blue-400">완벽하게</span> 끝내세요!
+                다음 집 찾느라<br />손님 앞에서 헤매지 마세요<br />
+                <span className="text-blue-400">임장 순서,</span> 자동으로 정리됩니다
               </span>
             </h1>
 
@@ -613,6 +614,11 @@ export default function LandingPage() {
           SECTION 5 · 모바일 접속 안내
       ══════════════════════════════════════ */}
       <MobilePreviewSection />
+
+      {/* ══════════════════════════════════════
+          SECTION 5-B · 온보딩 가이드
+      ══════════════════════════════════════ */}
+      <OnboardingGuide />
 
       {/* ══════════════════════════════════════
           SECTION 6 · 신청 폼
