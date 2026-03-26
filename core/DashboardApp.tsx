@@ -339,7 +339,7 @@ export default function DashboardApp() {
                     <span className="text-[11px] text-slate-500">{getFormattedDate()}</span>
                     <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse-dot" />
                   </div>
-                  <h1 className="font-bhs text-[22px] text-slate-900 tracking-tight">매물 안내 리스트</h1>
+                  <h1 className="font-extrabold text-[19px] text-slate-900 tracking-tight">매물 안내 리스트</h1>
                 </div>
                 <div className="flex items-center gap-2">
                   {/* 보관함 저장 버튼 */}

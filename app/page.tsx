@@ -166,11 +166,11 @@ export default function LandingPage() {
         </header>
 
         {/* 히어로 본문 */}
-        <main className="relative z-10 flex flex-col lg:flex-row items-center justify-center flex-1 px-6 py-10 max-w-6xl mx-auto w-full gap-12">
+        <main className="relative z-10 flex flex-col lg:flex-row items-center justify-center flex-1 px-6 pt-2 pb-10 max-w-6xl mx-auto w-full gap-12">
 
           {/* 텍스트 영역 */}
           <div className="flex-1 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/30 rounded-full px-4 py-1.5 text-blue-300 text-sm font-semibold mb-6">
+            <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/30 rounded-full px-4 py-1.5 text-blue-300 text-sm font-semibold mb-12">
               <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse flex-shrink-0" />
               15년 차 현직 소장이 직접 만든 실무 100% 도구
             </div>
@@ -183,19 +183,23 @@ export default function LandingPage() {
               </span>
             </h1>
 
-            <p className="text-slate-400 text-base sm:text-lg leading-relaxed mb-8">
-              사무실에선 <span className="text-white font-bold bg-blue-600/20 rounded px-1">PC로 툭!</span>{' '}
-              현장에선 <span className="text-white font-bold bg-blue-600/20 rounded px-1">폰으로 슥!</span><br />
-              계약 성사율을 높이는 소장님만의 디지털 비서
-            </p>
 
             {/* 로그인 / 대시보드 버튼 */}
-            {!firebaseUser ? (
-              <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-3 w-full max-w-[320px]">
+              {/* 항상 노출 */}
+              <a
+                href="#apply"
+                className="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 active:scale-[.98] text-white font-bold text-base px-7 py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40"
+              >
+                7일 무료체험 시작하기 →
+              </a>
+
+              {/* 비로그인만 */}
+              {!firebaseUser && (
                 <button
                   onClick={signInWithGoogle}
-                  className="inline-flex items-center gap-3 bg-white hover:bg-slate-50 active:scale-[.98] text-slate-800 font-bold text-base px-7 py-4 rounded-2xl transition-all shadow-xl shadow-black/20 border border-slate-200">
-                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                  className="w-full inline-flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 active:scale-[.98] text-slate-300 font-semibold text-sm px-7 py-3 rounded-2xl transition-all border border-slate-600 hover:border-slate-400">
+                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
@@ -203,24 +207,31 @@ export default function LandingPage() {
                   </svg>
                   Google 계정으로 로그인
                 </button>
-                {loginError && (
-                  <p className="text-red-400 text-[12px] text-center max-w-[280px] leading-snug bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-lg">
-                    {loginError}
-                  </p>
-                )}
-              </div>
-            ) : (appUser && canAccess(appUser)) ? (
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="inline-flex items-center gap-3 bg-blue-600 hover:bg-blue-500 active:scale-[.98] text-white font-bold text-base px-7 py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40">
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <rect x="4" y="2" width="16" height="20" rx="2"/>
-                  <path d="M9 22v-4h6v4"/>
-                  <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
-                </svg>
-                소장노트 PRO 시작하기
-              </button>
-            ) : null}
+              )}
+
+              {/* 승인 사용자만 */}
+              {firebaseUser && appUser && canAccess(appUser) && (
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="w-full inline-flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 active:scale-[.98] text-slate-300 font-semibold text-sm px-7 py-3 rounded-2xl transition-all border border-slate-600 hover:border-slate-400">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <rect x="4" y="2" width="16" height="20" rx="2"/>
+                    <path d="M9 22v-4h6v4"/>
+                    <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/>
+                  </svg>
+                  소장노트 PRO 시작하기
+                </button>
+              )}
+
+              {loginError && (
+                <p className="text-red-400 text-[12px] text-center max-w-[280px] leading-snug bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-lg">
+                  {loginError}
+                </p>
+              )}
+              <p className="text-slate-500 text-xs text-center leading-relaxed">
+                로그인만 하면 바로 사용 가능합니다 · 자동 결제 없음
+              </p>
+            </div>
 
           </div>
 
@@ -537,77 +548,74 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════
-          SECTION 4 · 가성비 강조 (저울 비교)
+          SECTION 4 · 가격 안내
       ══════════════════════════════════════ */}
-      <section className="bg-[#050d1f] py-24 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-blue-600/10 rounded-full blur-[120px]" />
-        </div>
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <p className="text-amber-400 text-xs font-bold tracking-[0.2em] uppercase mb-4">가격 비교</p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-4">
-            커피 한 잔 값으로<br />
-            <span className="text-amber-400">프로 중개사</span>가 되세요
-          </h2>
-          <p className="text-slate-400 text-base mb-16">월 4,500원, 하루 150원이면 충분합니다</p>
+      <section className="bg-gray-50 py-24 px-6 flex flex-col items-center">
 
-          {/* 저울 비교 */}
-          <div className="flex items-end justify-center gap-6 sm:gap-12 mb-14">
-            {/* 커피 쪽 (가벼움) */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="bg-slate-800/60 border border-slate-700 rounded-3xl p-6 sm:p-8 w-32 sm:w-44 flex flex-col items-center gap-3">
-                <div className="text-4xl sm:text-5xl">☕</div>
-                <div>
-                  <p className="text-white font-bold text-sm sm:text-base text-center">커피 한 잔</p>
-                  <p className="text-slate-400 text-xs text-center mt-1">4,500원</p>
-                </div>
-              </div>
-              <div className="text-slate-600 text-xs font-bold uppercase tracking-wider">하루 지출</div>
-            </div>
+        {/* 배지 */}
+        <span className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-600 text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-6">
+          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+          가격 안내
+        </span>
 
-            {/* 저울대 */}
-            <div className="flex flex-col items-center mb-10">
-              <div className="w-0.5 h-20 bg-gradient-to-b from-slate-600 to-slate-700" />
-              <div className="w-24 sm:w-32 h-0.5 bg-gradient-to-r from-slate-700 via-slate-500 to-slate-700" />
-              <div className="text-slate-500 text-xs mt-2">VS</div>
-            </div>
+        {/* 타이틀 */}
+        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 text-center leading-tight mb-3">
+          7일 동안 무료로<br />사용해보세요
+        </h2>
 
-            {/* 소장노트 쪽 (무거움 = 가치 있음) */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="bg-gradient-to-br from-blue-600/30 to-blue-800/30 border-2 border-blue-500/60 rounded-3xl p-6 sm:p-8 w-32 sm:w-44 flex flex-col items-center gap-3 shadow-2xl shadow-blue-900/50">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-400 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-700/50">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <rect x="4" y="2" width="16" height="20" rx="2"/>
-                    <path d="M9 22v-4h6v4"/>
-                    <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01"/>
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-white font-black text-sm sm:text-base text-center">소장노트 PRO</p>
-                  <p className="text-amber-400 font-bold text-center mt-1">연 55,000원</p>
-                  <p className="text-slate-400 text-[10px] text-center">= 하루 150원</p>
-                </div>
-              </div>
-              <div className="text-blue-400 text-xs font-bold uppercase tracking-wider">1년 전체</div>
-            </div>
+        {/* 서브텍스트 */}
+        <p className="text-slate-500 text-base text-center mb-10">
+          모든 기능을 제한 없이 사용할 수 있습니다
+        </p>
+
+        {/* 가격 카드 */}
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 w-full max-w-sm p-8 flex flex-col items-center gap-6">
+
+          {/* 무료체험 배지 */}
+          <div className="bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full tracking-wide">
+            7일 무료체험
           </div>
 
-          {/* 혜택 리스트 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto mb-10">
-            {[
-              { icon: '🔒', title: '기기 보안', desc: 'PC 1대 + 모바일 1대 등록 보안' },
-              { icon: '☁️', title: '클라우드 저장', desc: '매물 데이터 안전하게 무제한 보관' },
-              { icon: '📲', title: '즉시 문자 발송', desc: '현장에서 바로 고객 안내문자 전송' },
-            ].map((item, i) => (
-              <div key={i} className="bg-blue-950/40 border border-blue-800/40 rounded-2xl p-5 text-left">
-                <div className="text-2xl mb-2">{item.icon}</div>
-                <p className="text-white font-bold text-sm mb-1">{item.title}</p>
-                <p className="text-slate-400 text-xs leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
+          {/* 가격 */}
+          <div className="text-center">
+            <p className="text-5xl font-black text-slate-900 tracking-tight">₩0</p>
+            <p className="text-slate-400 text-sm mt-1">7일간 무료</p>
           </div>
 
+          {/* 구분선 */}
+          <div className="w-full border-t border-slate-100" />
+
+          {/* 이후 가격 */}
+          <div className="text-center">
+            <p className="text-slate-500 text-sm">7일 이후</p>
+            <p className="text-2xl font-bold text-slate-800 mt-0.5">
+              연 <span className="text-blue-600">19,900원</span>
+            </p>
+            <p className="text-slate-400 text-xs mt-1">월 환산 약 1,658원</p>
+          </div>
+
+          {/* 자동 결제 없음 */}
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 w-full justify-center">
+            <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-green-700 text-sm font-semibold">자동 결제 없음</span>
+          </div>
+
+          {/* CTA 버튼 */}
+          <a
+            href="#apply"
+            className="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 active:scale-[.98] text-white font-bold text-base px-7 py-4 rounded-2xl transition-all shadow-lg shadow-blue-200"
+          >
+            7일 동안 직접 써보고 결정하세요 →
+          </a>
+
+          {/* 하단 안내 */}
+          <p className="text-slate-400 text-xs text-center leading-relaxed">
+            신용카드 없이 바로 시작 · 언제든 해지 가능
+          </p>
         </div>
+
       </section>
 
       {/* ══════════════════════════════════════

@@ -1,15 +1,13 @@
-'use client';
-
-export default function MobilePreviewSection() {
+export default function MobilePreviewWhite() {
   return (
     <section className="bg-[#0a1628] py-20 px-6">
       <div className="max-w-5xl mx-auto">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
 
-          {/* 좌측: 스마트폰 목업 */}
+          {/* 좌측: 스마트폰 목업 — 화이트 아이폰 */}
           <div className="flex-shrink-0 flex items-center justify-center">
             <div className="relative">
-              {/* 폰 외형 */}
+              {/* 폰 외형 — slate-800 → white/gray-100 로 변경 */}
               <div className="w-56 rounded-[2.5rem] p-2 shadow-2xl"
                 style={{ backgroundColor: '#d1d5db', border: '1px solid #9ca3af', boxShadow: '0 0 0 1px rgba(156,163,175,0.8), 0 30px 80px rgba(0,0,0,0.5)' }}>
                 {/* 노치 */}
@@ -20,7 +18,7 @@ export default function MobilePreviewSection() {
                     <div className="rounded-full" style={{ width: '2rem', height: '0.25rem', backgroundColor: '#d1d5db' }} />
                   </div>
                 </div>
-                {/* 화면 영역 */}
+                {/* 화면 영역 — 기존 동일 */}
                 <div className="bg-[#f0f4ff] rounded-[2rem] overflow-hidden" style={{ minHeight: '440px' }}>
                   {/* 상단 헤더 */}
                   <div className="bg-white px-3 pt-3 pb-2 border-b border-slate-100">
@@ -121,7 +119,7 @@ export default function MobilePreviewSection() {
             </div>
           </div>
 
-          {/* 우측: 텍스트 + 3단계 */}
+          {/* 우측: 텍스트 + 3단계 — 기존 동일 */}
           <div className="flex-1 text-center lg:text-left">
             <p className="text-blue-400 text-xs font-bold tracking-[0.2em] uppercase mb-4">No Download Required</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-4">
@@ -134,7 +132,6 @@ export default function MobilePreviewSection() {
               <span className="text-amber-300 font-bold">app.sojangnote.com</span>만 입력하면 끝입니다.
             </p>
 
-            {/* 3단계 */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 {
